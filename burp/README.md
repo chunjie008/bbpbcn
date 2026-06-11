@@ -1,11 +1,11 @@
-# BlackBox Protobuf Burp 扩展
+﻿# BlackBox Protobuf Burp 扩展
 
 ## 描述
 
 这是一个用于拦截代理 Burp Suite (<https://portswigger.net/burp/>) 的扩展，允许编码和解码可能包含在拦截请求中的任意 protocol buffer (<https://developers.google.com/protocol-buffers/>) 消息。它设计用于在没有 protobuf 定义文件 (.proto) 的情况下工作——这类文件可能不可用，或无法与现有的 Burp 扩展一起使用。
 
 关于 protobuf 解码的背景信息以及类型系统的详细说明和可能的类型边界情况，请参见库文档：
-<https://github.com/nccgroup/blackboxprotobuf/blob/master/lib/README.md>
+<https://github.com/chunjie008/blackboxprotobuf/blob/master/lib/README.md>
 
 # 用法
 ## 安装

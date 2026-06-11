@@ -1,4 +1,4 @@
-# Blackbox Protobuf
+﻿# Blackbox Protobuf
 
 **Blackbox Protobuf 现在在 PyPi 上有官方包，名称为 `bbpb`。`blackboxprotobuf` 包是较旧的分支。**
 
@@ -14,10 +14,10 @@ Blackbox Protobuf 旨在允许在没有消息定义的情况下处理 protocol b
 
 本仓库包含多个用于处理 protocol buffers 的接口：
 
-- 一个 jython burp 扩展，位于 [burp/](https://github.com/nccgroup/blackboxprotobuf/tree/master/burp)
-- 一个可被其他应用使用的 Python 库，位于 [lib/](https://github.com/nccgroup/blackboxprotobuf/tree/master/lib)
-- 一个基于 Python 的 CLI，嵌入在[库](https://github.com/nccgroup/blackboxprotobuf/tree/master/lib/CLI.md)中
-- 一个 mitmproxy 插件，位于 [mitmproxy](https://github.com/nccgroup/blackboxprotobuf/tree/master/mitmproxy)
+- 一个 jython burp 扩展，位于 [burp/](https://github.com/chunjie008/blackboxprotobuf/tree/master/burp)
+- 一个可被其他应用使用的 Python 库，位于 [lib/](https://github.com/chunjie008/blackboxprotobuf/tree/master/lib)
+- 一个基于 Python 的 CLI，嵌入在[库](https://github.com/chunjie008/blackboxprotobuf/tree/master/lib/CLI.md)中
+- 一个 mitmproxy 插件，位于 [mitmproxy](https://github.com/chunjie008/blackboxprotobuf/tree/master/mitmproxy)
 
 ## 文档
 
