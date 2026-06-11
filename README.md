@@ -2,7 +2,7 @@
 
 > **Forked from [blackboxprotobuf](https://github.com/nccgroup/blackboxprotobuf). 中文注释 + 增强类型推测能力。**
 
-PyPi 包名：`bbpb-cn`，Python 导入名：`bbpbcn`。
+PyPi 包名：`bbpbcn`，Python 导入名：`bbpbcn`。
 
 ## 描述
 
@@ -10,7 +10,7 @@ bbpbcn 是 blackboxprotobuf 的中文 fork 版本，用于处理编码后的 Pro
 
 Protobuf 是 Google 推出的一种二进制序列化格式，可作为 JSON 或 XML 等格式的更高效替代方案。开发者可以在 `.proto` 文件中定义消息格式，并使用 protobuf 编译器生成所选语言的 message 处理代码。protobuf 编码是二进制的，不像 json/xml 那样可读或易于手动修改。该格式利用通信双方都拥有消息定义这一前提，省去了大量类型信息。这在提高效率的同时，也增加了分析或修改网络流量的难度。
 
-bbpb-cn 旨在在没有消息定义的情况下处理 protocol buffers。它 fork 自 NCC Group 的 blackboxprotobuf，增强了类型推测能力并提供了完整的中文注释。
+bbpbcn 旨在在没有消息定义的情况下处理 protocol buffers。它 fork 自 NCC Group 的 blackboxprotobuf，增强了类型推测能力并提供了完整的中文注释。
 
 ## 工具
 
