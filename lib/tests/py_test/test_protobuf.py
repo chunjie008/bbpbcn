@@ -32,7 +32,7 @@ import blackboxprotobuf
 
 warnings.filterwarnings(
     "ignore",
-    "Call to deprecated create function.*",
+    "调用已弃用的 create 函数.*",
 )
 
 try:
@@ -70,7 +70,7 @@ testMessage_typedef = {
 }
 
 
-# Test decoding from blackboxprotobuf
+# 测试 blackboxprotobuf 解码
 @given(x=strategies.gen_message_data(testMessage_typedef))
 def test_decode(x):
     message = Test_pb2.TestMessage()
@@ -79,12 +79,12 @@ def test_decode(x):
     encoded = message.SerializeToString()
     decoded, typedef = blackboxprotobuf.decode_message(encoded, testMessage_typedef)
     blackboxprotobuf.validate_typedef(typedef)
-    hypothesis.note("Decoded: %r" % decoded)
+    hypothesis.note("解码: %r" % decoded)
     for key in decoded.keys():
         assert x[key] == decoded[key]
 
 
-# Test encoding with blackboxprotobuf
+# 测试 blackboxprotobuf 编码
 @given(x=strategies.gen_message_data(testMessage_typedef))
 def test_encode(x):
     encoded = blackboxprotobuf.encode_message(x, testMessage_typedef)
@@ -95,8 +95,8 @@ def test_encode(x):
         assert getattr(message, key) == x[key]
 
 
-# Try to modify a random key with blackbox and re-encode
-# TODO: In the future do more random modifications, like swap the whole value
+# 尝试使用 blackbox 修改一个随机键并重新编码
+# TODO: 将来做更多随机修改，比如交换整个值
 @given(
     x=strategies.gen_message_data(testMessage_typedef),
     modify_num=st.sampled_from(sorted(testMessage_typedef.keys())),
@@ -110,7 +110,7 @@ def test_modify(x, modify_num):
     decoded, typedef = blackboxprotobuf.decode_message(encoded, testMessage_typedef)
     blackboxprotobuf.validate_typedef(typedef)
 
-    # eliminate any cases where protobuf defaults out a field
+    # 排除 protobuf 默认值为 0 的情况
     hypothesis.assume(modify_key in decoded)
 
     if isinstance(decoded[modify_key], six.text_type):
@@ -123,7 +123,7 @@ def test_modify(x, modify_num):
         mod_func = lambda x: 10
     else:
         hypothesis.note(
-            "Failed to modify key: %s (%r)" % (modify_key, type(decoded[modify_key]))
+            "修改键失败: %s (%r)" % (modify_key, type(decoded[modify_key]))
         )
         assert False
 
@@ -138,14 +138,14 @@ def test_modify(x, modify_num):
         assert getattr(message, key) == x[key]
 
 
-## Second copies of the above methods that use the protobuf to/from json functions
+## 上述方法的第二个副本，使用 protobuf 与 json 互转的函数
 
 
 @given(x=strategies.gen_message_data(testMessage_typedef))
 @example(x={"testBytes": b"test123"})
 @example(x={"testBytes": b"\x80"})
 def test_decode_json(x):
-    # Test with JSON payload
+    # 使用 JSON payload 测试
     message = Test_pb2.TestMessage()
     for key, value in x.items():
         setattr(message, key, value)
@@ -155,12 +155,12 @@ def test_decode_json(x):
         encoded, testMessage_typedef
     )
     blackboxprotobuf.validate_typedef(typedef_json)
-    hypothesis.note("Encoded JSON:")
+    hypothesis.note("编码 JSON:")
     hypothesis.note(decoded_json)
     decoded = json.loads(decoded_json)
-    hypothesis.note("Original value:")
+    hypothesis.note("原始值:")
     hypothesis.note(x)
-    hypothesis.note("Decoded valuec:")
+    hypothesis.note("解码值:")
     hypothesis.note(decoded)
     for key in decoded.keys():
         if key == "testBytes":
@@ -171,31 +171,31 @@ def test_decode_json(x):
 @given(x=strategies.gen_message_data(testMessage_typedef))
 @example(x={"testBytes": b"\x80"})
 def test_encode_json(x):
-    # Test with JSON payload
+    # 使用 JSON payload 测试
     if "testBytes" in x:
         x["testBytes"] = x["testBytes"].decode("latin1")
     json_str = json.dumps(x)
 
-    hypothesis.note("JSON Str Input:")
+    hypothesis.note("JSON 字符串输入:")
     hypothesis.note(json_str)
     hypothesis.note(json.loads(json_str))
 
     encoded = blackboxprotobuf.protobuf_from_json(json_str, testMessage_typedef)
     assert not isinstance(encoded, list)
-    hypothesis.note("BBP decoding:")
+    hypothesis.note("BBP 解码:")
 
     test_decode, _ = blackboxprotobuf.decode_message(encoded, testMessage_typedef)
     hypothesis.note(test_decode)
 
     message = Test_pb2.TestMessage()
     message.ParseFromString(encoded)
-    hypothesis.note("Message:")
+    hypothesis.note("消息:")
     hypothesis.note(message)
 
     for key in x.keys():
-        hypothesis.note("Message value")
+        hypothesis.note("消息值")
         hypothesis.note(type(getattr(message, key)))
-        hypothesis.note("Original value")
+        hypothesis.note("原始值")
         hypothesis.note(type(x[key]))
         if key == "testBytes":
             x[key] = six.ensure_binary(x[key], encoding="latin1")
@@ -218,7 +218,7 @@ def test_modify_json(x, modify_num):
     blackboxprotobuf.validate_typedef(typedef)
     decoded = json.loads(decoded_json)
 
-    # eliminate any cases where protobuf defaults out a field
+    # 排除 protobuf 默认值为 0 的情况
     hypothesis.assume(modify_key in decoded)
 
     if isinstance(decoded[modify_key], six.text_type):
@@ -231,7 +231,7 @@ def test_modify_json(x, modify_num):
         mod_func = lambda x: 10
     else:
         hypothesis.note(
-            "Failed to modify key: %s (%r)" % (modify_key, type(decoded[modify_key]))
+            "修改键失败: %s (%r)" % (modify_key, type(decoded[modify_key]))
         )
         assert False
 
@@ -246,9 +246,9 @@ def test_modify_json(x, modify_num):
     message.ParseFromString(encoded)
 
     for key in decoded.keys():
-        hypothesis.note("Message value:")
+        hypothesis.note("消息值:")
         hypothesis.note(type(getattr(message, key)))
-        hypothesis.note("Orig value:")
+        hypothesis.note("原始值:")
         hypothesis.note((x[key]))
         if key == "testBytes":
             x[key] = six.ensure_binary(x[key], encoding="latin1")

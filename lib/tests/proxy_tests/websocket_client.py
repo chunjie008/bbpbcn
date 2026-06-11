@@ -31,7 +31,7 @@ message = Test_pb2.TestMessage(testString="test123").SerializeToString()
 if payload_type == "gzip":
     message = zlib.compress(message, level=9, wbits=31)
 elif payload_type == "grpc":
-    # Fake grpc wrapper
+    # 伪 grpc 包装
     length = len(message)
     old_message = message
     message = bytearray()
@@ -47,13 +47,13 @@ ws.connect(
     http_proxy_port="8080",
     http_no_proxy=["test"],
 )
-print("Connected")
+print("已连接")
 ws.send(bytes(message), websocket.ABNF.OPCODE_BINARY)
-print("Sent message")
+print("已发送消息")
 response_content = ws.recv()
 
 if len(response_content) == 0:
-    print("Got an Empty response")
+    print("收到空响应")
 else:
     if payload_type == "gzip":
         response_content = zlib.decompress(response_content, wbits=31)
@@ -68,6 +68,6 @@ else:
     response_message = Test_pb2.TestMessage()
     response_message.ParseFromString(response_content)
 
-    print(f"Got response message: {response_message}")
+    print(f"收到响应消息: {response_message}")
 
 ws.close()

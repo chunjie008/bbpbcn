@@ -1,7 +1,7 @@
-"""This module contains classes/methods for decoding individual field types.
+"""此模块包含解码单个字段类型的类和方法。
 
-Grouped into submodules based on wire type.
-Re-exports type_maps items for easier access.
+按线缆类型（wire type）分组到子模块中。
+重新导出 type_maps 中的条目以便于访问。
 """
 
 # Copyright (c) 2018-2024 NCC Group Plc

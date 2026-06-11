@@ -1,13 +1,12 @@
-"""`blackboxprotobuf` provides APIs for decoding and encoding binary protobuf
-messages.
+"""`blackboxprotobuf` 提供了解码和编码二进制 protobuf 消息的 API。
 
-This module re-exports the functions defined in `blackboxprotobuf.lib.api`,
-which provides a high level interface and convenience functions.
+此模块重新导出 `blackboxprotobuf.lib.api` 中定义的函数，
+其提供了高级接口和便利函数。
 
-This module is split into two submodules:
+此模块分为两个子模块：
 
-    - The `lib` submodule contains the decoding/encoding logic and provides a python interface.
-    - The `burp` submodule defines the Burp Suite plugin and UI.
+    - `lib` 子模块包含解码/编码逻辑并提供一个 Python 接口。
+    - `burp` 子模块定义了 Burp Suite 插件和 UI。
 """
 
 # Copyright (c) 2018-2024 NCC Group Plc

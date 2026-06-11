@@ -28,7 +28,7 @@ import blackboxprotobuf as bbp
 
 typedef = {}
 
-# Take a protobuf binary from stdin and decode it to JSON
+# 从标准输入获取 protobuf 二进制数据并解码为 JSON
 protobuf = sys.stdin.read()
 json, typedef = bbp.protobuf_to_json(protobuf, typedef)
 print(json)

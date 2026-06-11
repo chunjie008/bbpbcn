@@ -1,5 +1,4 @@
-"""Try to test the exception generation by the library. Everything should
-throw some form of BlackboxProtobufException."""
+"""尝试测试库生成的异常。所有异常都应抛出某种形式的 BlackboxProtobufException。"""
 
 # Copyright (c) 2018-2024 NCC Group Plc
 #
@@ -32,10 +31,10 @@ from blackboxprotobuf.lib.exceptions import (
     EncoderException,
 )
 
-# Fixed exception tests
+# 固定类型异常测试
 
 
-## Encoding
+## 编码
 @given(value=st.integers())
 def test_encode_fixed32(value):
     try:
@@ -90,7 +89,7 @@ def test_encode_double(value):
         pass
 
 
-## Decoding
+## 解码
 
 
 @given(buf=st.binary(max_size=100), pos=st.integers(max_value=200))
@@ -147,7 +146,7 @@ def test_decode_double(buf, pos):
         pass
 
 
-# Varint exception tests
+# Varint 异常测试
 @given(value=st.integers())
 def test_encode_uvarint(value):
     try:
@@ -202,7 +201,7 @@ def test_decode_svarint(buf, pos):
         pass
 
 
-# length_delim exception tests
+# length_delim 异常测试
 
 
 @given(value=st.binary())

@@ -1,5 +1,5 @@
-"""Contains classes for a window for editing type definitions. Called from both
-the message editor tab and from the suite tabs.
+"""包含用于编辑类型定义的窗口的类。可从消息编辑器选项卡
+和套件选项卡调用。
 """
 
 # Copyright (c) 2018-2023 NCC Group Plc
@@ -40,8 +40,8 @@ from javax.swing import (
 
 
 class TypeEditorWindow(JDialog):
-    """New free-standing window for editing a specified type definition. Will
-    callback into the calling class when the type is saved
+    """用于编辑指定类型定义的新独立窗口。保存类型时将
+    回调到调用类
     """
 
     def __init__(self, burp_callbacks, typedef, source, callback):
@@ -72,7 +72,7 @@ class TypeEditorWindow(JDialog):
         self.is_open = True
 
     def createButtonPane(self):
-        """Create a new button pane with the type editor window"""
+        """在类型编辑器窗口中创建新的按钮面板"""
         self._button_listener = TypeEditorButtonListener(self)
 
         panel = JPanel()
@@ -80,20 +80,20 @@ class TypeEditorWindow(JDialog):
 
         panel.add(Box.createRigidArea(Dimension(0, 5)))
         panel.add(
-            self.createButton("Validate", "validate", "Check if typedef is valid")
+            self.createButton("Validate", "validate", "检查 typedef 是否有效")
         )
         panel.add(Box.createRigidArea(Dimension(0, 3)))
-        panel.add(self.createButton("Save", "save", "Save the typedef"))
+        panel.add(self.createButton("Save", "save", "保存 typedef"))
         panel.add(Box.createRigidArea(Dimension(0, 3)))
-        panel.add(self.createButton("Reset", "reset", "Reset to original"))
+        panel.add(self.createButton("Reset", "reset", "重置为原始内容"))
         panel.add(Box.createRigidArea(Dimension(0, 3)))
-        panel.add(self.createButton("Exit", "exit", "Close window and reset"))
+        panel.add(self.createButton("Exit", "exit", "关闭窗口并重置"))
         panel.add(Box.createRigidArea(Dimension(0, 3)))
 
         return panel
 
     def createButton(self, text, command, tooltip):
-        """Generate a new button with a given text and command"""
+        """使用给定的文本和命令生成新按钮"""
         button = JButton(text)
         button.setAlignmentX(Component.CENTER_ALIGNMENT)
         button.setActionCommand(command)
@@ -102,16 +102,15 @@ class TypeEditorWindow(JDialog):
         return button
 
     def applyType(self):
-        """Callback for the apply button. Validates the definition and calls
-        the callback provided when opening the window
+        """应用按钮的回调。验证定义并调用
+        打开窗口时提供的回调
         """
 
         try:
             new_json = self._type_editor.getText().tostring()
             message_type = json.loads(new_json)
             if self._original_json == new_json and len(message_type) != 0:
-                # Detect if no text was changed, but allow an empty type for
-                # adding empty ones
+                # 检测文本是否未更改，但允许空类型用于添加空的类型
                 self.exitTypeWindow()
                 return
 
@@ -125,16 +124,16 @@ class TypeEditorWindow(JDialog):
             JOptionPane.showMessageDialog(self, "Error saving type: " + str(exc))
 
     def resetTypeWindow(self):
-        """Callback for reset button. Resets to the original type definition"""
+        """重置按钮的回调。重置为原始类型定义"""
         self._type_editor.setText(json.dumps(self._original_typedef, indent=4))
 
     def exitTypeWindow(self):
-        """Callback for exit button. Exits the window without saving"""
+        """退出按钮的回调。不保存退出窗口"""
         self.is_open = False
         self.dispatchEvent(WindowEvent(self, WindowEvent.WINDOW_CLOSING))
 
     def validateType(self):
-        """Callback for validate button. Validates the type without saving"""
+        """验证按钮的回调。验证类型而不保存"""
         try:
             message_type = json.loads(self._type_editor.getText().tostring())
         except Exception as exc:
@@ -151,13 +150,13 @@ class TypeEditorWindow(JDialog):
 
 
 class TypeEditorButtonListener(ActionListener):
-    """Button action listener for the type editor window"""
+    """类型编辑器窗口的按钮动作监听器"""
 
     def __init__(self, type_editor):
         self._type_editor = type_editor
 
     def actionPerformed(self, event):
-        """Called when a button is pressed"""
+        """当按钮被按下时调用"""
         if event.getActionCommand() == "validate":
             self._type_editor.validateType()
         elif event.getActionCommand() == "save":

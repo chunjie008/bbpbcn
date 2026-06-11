@@ -27,7 +27,7 @@ import Test_pb2_grpc
 
 class TestService(Test_pb2_grpc.TestService):
     def TestRPC(self, msg, ctx):
-        print("Got RPC message: %s" % msg)
+        print("收到 RPC 消息: %s" % msg)
         return msg
 
 

@@ -26,11 +26,11 @@ import struct
 
 for payload_type in ["none", "gzip", "grpc"]:
     message = Test_pb2.TestMessage(testString="test123").SerializeToString()
-    print(f"Sending payload encoded with {payload_type}")
+    print(f"发送使用 {payload_type} 编码的 payload")
     if payload_type == "gzip":
         message = zlib.compress(message, level=9, wbits=31)
     elif payload_type == "grpc":
-        # Fake grpc wrapper
+        # 伪 grpc 包装
         length = len(message)
         old_message = message
         message = bytearray()
@@ -47,7 +47,7 @@ for payload_type in ["none", "gzip", "grpc"]:
         },
         proxies={"http": "http://localhost:8080"},
     )
-    print(f"Got response: {response.status_code} {response.text}")
+    print(f"收到响应: {response.status_code} {response.text}")
     response_content = response.content
 
     if payload_type == "gzip":
@@ -63,4 +63,4 @@ for payload_type in ["none", "gzip", "grpc"]:
     response_message = Test_pb2.TestMessage()
     response_message.ParseFromString(response_content)
 
-    print(f"Got response message: {response_message}")
+    print(f"收到响应消息: {response_message}")

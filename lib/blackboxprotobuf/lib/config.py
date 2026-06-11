@@ -36,23 +36,21 @@ if six.PY3:
 class Config:
     def __init__(self):
         # type: (Config) -> None
-        # Map of message type names to typedefs, previously stored at
-        # `blackboxprotobuf.known_messages`
+        # 消息类型名称到 typedef 的映射，之前存储在 `blackboxprotobuf.known_messages`
         self.known_types = {}  # type: Dict[str, TypeDefDict]
 
-        # Default type for "bytes" like objects that aren't messages or strings
-        # Other option is currently just 'bytes_hex'
+        # 非消息或字符串的"bytes"类对象的默认类型
+        # 另一个选项目前只有 'bytes_hex'
         self.default_binary_type = "bytes"
 
-        # Change the default type for a wiretype (eg. change ints to be signed
-        # by default or fixed fields to always be float)
+        # 更改线类型的默认类型（例如，默认将 int 改为有符号，
+        # 或将固定字段改为浮点数）
         self.default_types = {}  # type: Dict[int, str]
 
-        # Configure whether bbpb should try to re-encode fields in the same
-        # order they decoded
-        # Field order shouldn't matter for real protobufs, but is there to ensure
-        # that bytes/string are accidentally valid protobufs don't get scrambled
-        # by decoding/re-encoding
+        # 配置 bbpb 是否应尝试按解码时的相同顺序重新编码字段
+        # 字段顺序对于真正的 protobuf 来说应该不重要，
+        # 但确保字节/字符串在解码/重新编码时不会意外地
+        # 打乱恰好是有效 protobuf 的数据
         self.preserve_field_order = True
 
     def get_default_type(self, wiretype):

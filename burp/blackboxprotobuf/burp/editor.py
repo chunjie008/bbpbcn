@@ -1,4 +1,4 @@
-"""Module contains classes required to create Protobuf editor tabs."""
+"""包含创建 Protobuf 编辑器选项卡所需的类。"""
 
 # Copyright (c) 2018-2023 NCC Group Plc
 #
@@ -56,22 +56,22 @@ NAME_REGEX = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 
 
 class ProtoBufEditorTabFactory(burp.IMessageEditorTabFactory):
-    """Just returns instances of ProtoBufEditorTab"""
+    """仅返回 ProtoBufEditorTab 实例"""
 
     def __init__(self, extender, callbacks):
         self._callbacks = callbacks
         self._extender = extender
 
     def createNewInstance(self, controller, editable):
-        """Return new instance of editor tab for a new message"""
+        """返回新消息的编辑器选项卡新实例"""
         return ProtoBufEditorTab(self._extender, controller, editable, self._callbacks)
 
 
 class ProtoBufEditorTab(burp.IMessageEditorTab):
-    """Tab in interceptor/repeater for editing protobuf message.
+    """在拦截器/重放器中用于编辑 protobuf 消息的选项卡。
 
-    Decodes the message to JSON and back for editing.
-    The message type definition is attached to this object for re-encoding or editing.
+    将消息解码为 JSON 以便编辑，再编码回 protobuf。
+    消息类型定义附加到此对象，用于重新编码或编辑。
     """
 
     def __init__(self, extension, controller, editable, callbacks):
@@ -109,13 +109,13 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         self._decode_task = None
 
     def getTabCaption(self):
-        """Return message tab caption"""
+        """返回消息选项卡标题"""
         return "Protobuf"
 
     def getMessage(self):
-        """Transform the JSON format back to the binary protobuf message"""
-        # Noticing this gets called twice for some reason
-        # If we haven't finished decoding the message, cancel and return the original content
+        """将 JSON 格式转换回二进制 protobuf 消息"""
+        # 注意到这个函数由于某种原因被调用了两次
+        # 如果消息解码尚未完成，则取消并返回原始内容
         if self._decode_task and (
             not self._decode_task.isDone() or self._decode_task.isCancelled()
         ):
@@ -149,7 +149,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                     self._last_good.message, self._last_good.typedef
                 )
 
-                # Put the error here so that we only have one error to the user if the above encoding doesn't work
+                # 在此处放置错误，以便如果上述编码不起作用，用户只看到一个错误
                 JOptionPane.showMessageDialog(
                     self._component,
                     "Error encoding protobuf as-is. Reset data to previous good state: "
@@ -157,7 +157,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                 )
 
                 success = True
-                # Reset the message and protobuf data both
+                # 同时重置消息和 protobuf 数据
                 self._text_editor.setText(self._last_good.message)
                 self._payload_info.protobuf_data = protobuf_data
                 return self._payload_info.generate_http(
@@ -177,7 +177,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         self, message_info, protobuf_data, message_type_in, typedef_source
     ):
         """
-        Sets the protobuf message for the editor.
+        设置编辑器的 protobuf 消息。
         """
         try:
             json_data, message_type = blackboxprotobuf.protobuf_to_json(
@@ -194,7 +194,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                 "Got error decoding protobuf binary: " + traceback.format_exc()
             )
 
-        # Bring out of exception handler to avoid nesting handlers
+        # 移出异常处理器以避免嵌套
         if success:
             if typedef_source is not None:
                 self.forceSelectType(typedef_source)
@@ -211,11 +211,11 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
 
     def setMessage(self, content, is_request):
         """
-        Get the data from the request/response and parse into JSON.
+        从请求/响应中获取数据并解析为 JSON。
         """
-        # Run in a separate thread to avoid hanging the Burp UI
-        # It has been observed that the Burp UI can hang when the message is large
-        # and the decoding process takes a long time
+        # 在单独线程中运行以避免 Burp UI 挂起
+        # 已观察到当消息较大时 Burp UI 可能会挂起
+        # 且解码过程需要很长时间
 
         message_info = MessageInfo(content, is_request, self._helpers, self._controller)
         payload_info = PayloadInfo(message_info, self._helpers)
@@ -226,10 +226,10 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
             and not self._decode_task.isCancelled()
             and not self._decode_task.isDone()
         ):
-            # If we're processing the same message as the running task
-            # check message has
-            # check protobuf data
-            # TODO do we want to check typedef? Can switch away and back to restart it if we need to
+            # 如果正在处理的消息与运行中的任务相同
+            # 检查消息哈希值
+            # 检查 protobuf 数据
+            # TODO 我们是否要检查 typedef？可以切换离开再回来以重新启动
             if (
                 message_info.message_hash == self._message_info.message_hash
                 and payload_info.raw_data == self._payload_info.raw_data
@@ -242,7 +242,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                 # self._callbacks.printOutput(
                 #    "Have existing task that is still running, cancelling"
                 # )
-                # Cancel the old task
+                # 取消旧任务
                 self._decode_task.cancel(True)
 
         self._message_info = message_info
@@ -269,39 +269,38 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                             typedef_source,
                         )
 
-                        # Payload successfully decoded, so we probably have the right wrapper for the payload
+                        # Payload 成功解码，所以我们可能找到了正确的 payload 包装器
                         self._payload_info.protobuf_data = protobuf_data
                         self._payload_info.encoding_alg = encoding_alg
 
                         return
                     except BlackboxProtobufException:
                         if encoding_alg == "none":
-                            # Reraise the exception to the parent context and halt decoding
+                            # 将异常重新抛出到父上下文并停止解码
                             six.reraise(*sys.exc_info())
                         continue
 
             except Exception as ex:
-                # Catch all, otherwise it disappears
+                # 捕获所有异常，否则会消失
                 self._text_editor.setText("Error decoding protobuf")
                 self._callbacks.printError("Error decoding protobuf: %s" % ex)
 
         self._decode_task = self._extension.thread_executor.submit(run)
 
     def getSelectedData(self):
-        """Get text currently selected in message"""
+        """获取当前在消息中选中的文本"""
         return self._text_editor.getSelectedText()
 
     def getUiComponent(self):
-        """Return Java AWT component for this tab"""
+        """返回此选项卡的 Java AWT 组件"""
         return self._component
 
     def isEnabled(self, content, is_request):
-        """Try to detect a protobuf in the message to enable the tab.
+        """尝试检测消息中的 protobuf 以启用选项卡。
 
-        Defaults to content-type header of 'x-protobuf'. User overridable in
-        `user_funcs.py`
+        默认检查 'x-protobuf' 的 content-type 头。用户可在 `user_funcs.py` 中覆盖。
         """
-        # TODO implement some more default checks
+        # TODO 实现更多默认检查
         if is_request:
             info = self._helpers.analyzeRequest(content)
         else:
@@ -314,7 +313,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
             if result is not None:
                 return result
 
-        # Bail early if there is no body
+        # 如果没有 body 则提前退出
         if info.getBodyOffset() == len(content):
             return False
 
@@ -322,7 +321,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
             "protobuf",
             "grpc",
         ]
-        # Check all headers for x-protobuf
+        # 检查所有头部中是否包含 protobuf
         for header in info.getHeaders():
             if "content-type" in header.lower():
                 for protobuf_content_type in protobuf_content_types:
@@ -332,11 +331,11 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         return False
 
     def isModified(self):
-        """Return if the message was modified"""
+        """返回消息是否被修改"""
         return self._text_editor.isTextModified()
 
     def createButtonPane(self):
-        """Create a new button pane for the message editor tab"""
+        """为消息编辑器选项卡创建新的按钮面板"""
         self._button_listener = EditorButtonListener(self)
 
         panel = JPanel()
@@ -356,7 +355,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         new_type_panel.add(Box.createRigidArea(Dimension(3, 0)))
         new_type_panel.add(
             self.createButton(
-                "New", "new-type", "Save this message's type under a new name"
+                "New", "new-type", "以新名称保存此消息的类型"
             )
         )
         new_type_panel.setMaximumSize(Dimension(200, 20))
@@ -369,20 +368,20 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         if self._editable:
             button_panel.add(
                 self.createButton(
-                    "Validate", "validate", "Validate the message can be encoded."
+                    "Validate", "validate", "验证消息是否可以编码。"
                 )
             )
         button_panel.add(
-            self.createButton("Edit Type", "edit-type", "Edit the message type")
+            self.createButton("Edit Type", "edit-type", "编辑消息类型")
         )
         button_panel.add(
             self.createButton(
-                "Reset Message", "reset", "Reset the message and undo changes"
+                "Reset Message", "reset", "重置消息并撤销更改"
             )
         )
         button_panel.add(
             self.createButton(
-                "Clear Type", "clear-type", "Reparse the message with an empty type"
+                "Clear Type", "clear-type", "使用空类型重新解析消息"
             )
         )
         button_panel.setMinimumSize(Dimension(100, 200))
@@ -393,7 +392,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         return panel
 
     def createButton(self, text, command, tooltip):
-        """Create a new button with the given text and command"""
+        """使用给定的文本和命令创建新按钮"""
         button = JButton(text)
         button.setAlignmentX(Component.CENTER_ALIGNMENT)
         button.setActionCommand(command)
@@ -402,15 +401,13 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         return button
 
     def validateMessage(self):
-        """Callback for validate button. Attempts to encode the message with
-        the current type definition
-        """
+        """验证按钮的回调。尝试使用当前类型定义编码消息"""
         try:
             json_data = self._text_editor.getText().tostring()
             typedef = self._last_good.typedef
             protobuf_data = blackboxprotobuf.protobuf_from_json(json_data, typedef)
-            # If it works, save the message
-            # Don't need to save typeddef because we're using the one from lastgood
+            # 如果成功，保存消息
+            # 不需要保存 typedef，因为我们使用的是 lastgood 中的那个
             self._last_good.message = json_data
             self._payload_info.protobuf_data = protobuf_data
 
@@ -422,9 +419,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
             self._callbacks.printError(traceback.format_exc())
 
     def resetMessage(self):
-        """Drop any changes and revert to the last good message. Callback for
-        "reset" button
-        """
+        """放弃所有更改并恢复到上一个正确的消息。"reset" 按钮的回调"""
 
         self._text_editor.setText(self._last_good.message)
 
@@ -435,28 +430,25 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
             self._type_list_component.setSelectedIndex(index)
 
     def updateTypeSelection(self):
-        """Apply a new typedef based on the selected type in the type list"""
-        # TODO It sucks that we lose the anonymous type if we accidentally
-        # click a type. Maybe we should have an entry in the cached type in the
-        # list?
-        # Or have a warning before switching
-        # Or require a click + a button press?
+        """根据在类型列表中选择的类型应用新的 typedef"""
+        # TODO 如果我们意外点击了一个类型就丢失匿名类型，这很糟糕。也许应该在列表中添加一个缓存类型的条目？
+        # 或者在切换前给出警告
+        # 或者需要点击 + 按钮确认？
 
-        # Check if something is selected
+        # 检查是否选择了某个类型
         if self._type_list_component.isSelectionEmpty():
             self._last_valid_type_index = None
             self._extension.saved_types.pop(self._message_info.message_hash, None)
             return
 
-        # TODO won't actually work right if we delete the type we're using a
-        # new type is now in the index
+        # TODO 如果删除正在使用的类型，而新类型现在在索引中，这将无法正常工作
         if self._last_valid_type_index == self._type_list_component.getSelectedIndex():
-            # hasn't actually changed since last time we tried
-            # otherwise can trigger a second time when we call setSelectedIndex below on failure
+            # 自上次尝试以来实际上没有变化
+            # 否则在下面失败时调用 setSelectedIndex 会第二次触发
             return
 
         type_name = self._type_list_component.getSelectedValue()
-        # try to catch none here...
+        # 尝试捕获 None...
         if not type_name or type_name not in default_config.known_types:
             return
 
@@ -475,7 +467,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                     self._component,
                     "Error encoding protobuf with type %s: %s" % (type_name, exc),
                 )
-                # decoder exception means it doesn't match the message that was sucessfully encoded by the prev type
+                # 解码器异常意味着该类型与先前类型成功编码的消息不匹配
                 self._filtered_message_model.remove_type(type_name)
 
             if self._last_valid_type_index is not None:
@@ -490,14 +482,13 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         self._last_valid_type_index = self._type_list_component.getSelectedIndex()
 
     def editType(self, typedef, source):
-        """Apply and save the new typedef"""
-        # Try to apply the type first
+        """应用并保存新的 typedef"""
+        # 先尝试应用类型
         try:
-            # TODO Background this like with handle_protobuf? I think we need
-            # to be more confident that we can validate the typedef without
-            # decoding first
-            # The decoding here throws an exception that will prevent us from
-            # closing the typedef editor window if it's not valid
+            # TODO 像 handle_protobuf 一样在后台执行此操作？我认为需要
+            # 更确定我们可以验证 typedef 而无需先解码
+            # 这里的解码会抛出异常，如果类型无效将阻止我们
+            # 关闭 typedef 编辑器窗口
             self.applyType(typedef, source)
         except BlackboxProtobufException as exc:
             self._callbacks.printError("Got exception trying to apply edited typedef.")
@@ -508,18 +499,18 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
             return
 
         if source is None:
-            # Anonymous typedef tied to message hash
-            # save the typedef
+            # 绑定到消息哈希的匿名 typedef
+            # 保存 typedef
             self._extension.saved_types[self._message_info.message_hash] = typedef
         else:
-            # Named typedef
-            # save under known typedefs and save the name in source
+            # 命名 typedef
+            # 保存到已知 typedef 下，并在 source 中保存名称
             default_config.known_types[source] = typedef
             self._extension.saved_types[self._message_info.message_hash] = source
 
     def applyType(self, typedef, source):
-        """Apply a new typedef to the message. Throws an exception if type is invalid."""
-        # Convert to protobuf as old type and re-interpret as new type
+        """对消息应用新的 typedef。如果类型无效则抛出异常。"""
+        # 使用旧类型转换为 protobuf，再重新解释为新类型
         old_typedef = self._last_good.typedef
         json_data = self._text_editor.getText().tostring()
 
@@ -534,10 +525,10 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
 
         self._filtered_message_model.set_new_data(protobuf_data)
         self._text_editor.setText(str(new_json))
-        # We do not try to remember the type here, this should be handled by the caller
+        # 我们不在此处记住类型，这应由调用者处理
 
     def saveAsNewType(self):
-        """Copy the current type into known_messages"""
+        """将当前类型复制到 known_messages 中"""
 
         name = self._new_type_field.getText().strip()
         if not NAME_REGEX.match(name):
@@ -555,16 +546,16 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
 
         typedef = self._last_good.typedef
 
-        # Do a deep copy on the dictionary so we don't accidentally modify others
+        # 对字典进行深拷贝，以免意外修改其他内容
         default_config.known_types[name] = copy.deepcopy(typedef)
-        self._last_good.source = name  # remember the source, typedef is still the same
+        self._last_good.source = name  # 记住来源，typedef 仍然相同
 
-        # update the list of messages. This should trickle down to known message model
+        # 更新消息列表。这应传递到已知消息模型
         self._extension.known_message_model.addElement(name)
         self._new_type_field.setText("")
         self._extension.saved_types[self._message_info.message_hash] = name
 
-        # force select our new type
+        # 强制选择我们的新类型
         self.forceSelectType(name)
 
     def clearType(self):
@@ -579,10 +570,10 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         self._extension.open_typedef_editor(typedef, source, self.editType)
 
     def _get_saved_typedef(self, message_info):
-        # Get the typedef we have saved for this message
-        # It can be anonymous, but saved based on the message hash
-        # Or it can be named
-        # Return typedef, typename tuple
+        # 获取为此消息保存的 typedef
+        # 可以是匿名的，但基于消息哈希保存
+        # 也可以是命名的
+        # 返回 typedef, typename 元组
         if message_info.message_hash in self._extension.saved_types:
             saved_type = self._extension.saved_types[message_info.message_hash]
             if isinstance(saved_type, dict):
@@ -592,8 +583,8 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                 typedef = default_config.known_types[typename]
                 return typedef, typename
             else:
-                # We had a type, but it isn't a dict and not in known types
-                # Error, so clear
+                # 我们有一个类型，但它既不是 dict 也不在已知类型中
+                # 错误，因此清除
                 self._extension.saved_types.pop(message_info.message_hash, None)
                 self._callbacks.printError(
                     "Found unknown saved type: %s for %s"
@@ -604,13 +595,13 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
 
 
 class EditorButtonListener(ActionListener):
-    """Callback listener for buttons in the message editor tab"""
+    """消息编辑器选项卡中按钮的回调监听器"""
 
     def __init__(self, editor_tab):
         self._editor_tab = editor_tab
 
     def actionPerformed(self, event):
-        """Called when when a button in the message editor is pressed"""
+        """当消息编辑器中的按钮被按下时调用"""
         if event.getActionCommand() == "validate":
             self._editor_tab.validateMessage()
         elif event.getActionCommand() == "reset":
@@ -624,7 +615,7 @@ class EditorButtonListener(ActionListener):
 
 
 class TypeListListener(ListSelectionListener):
-    """Callback listener for when a new type is selected form the list"""
+    """从列表中选择新类型时的回调监听器"""
 
     def __init__(self, editor_tab):
         self._editor_tab = editor_tab
@@ -636,9 +627,7 @@ class TypeListListener(ListSelectionListener):
 
 
 class FilteredMessageModel(ListModel, ListDataListener):
-    """Listens to a java ListModel and keeps a subset with just valid types
-    for a message.
-    """
+    """监听 java ListModel 并维护仅包含消息有效类型的子集"""
 
     def __init__(self, parent, callbacks):
         self._callbacks = callbacks
@@ -646,7 +635,7 @@ class FilteredMessageModel(ListModel, ListDataListener):
         self._parent_model = parent
         self._listeners = []
 
-        # list of types in the parent model
+        # 父模型中的类型列表
         self._types = []
         self._parent_types = set(parent.elements())
         self._rejected_types = set()
@@ -657,11 +646,11 @@ class FilteredMessageModel(ListModel, ListDataListener):
     def set_new_data(self, data):
         self._data = data
 
-        # clear caches
+        # 清除缓存
         self._working_types.clear()
         self._rejected_types.clear()
 
-        # recheck all the types with the new data
+        # 使用新数据重新检查所有类型
         for typename in self._types[:]:
             if not self._check_type(typename):
                 removed_index = self._types.index(typename)
@@ -688,12 +677,12 @@ class FilteredMessageModel(ListModel, ListDataListener):
         return None
 
     def remove_type(self, typename):
-        # if we failed to apply a type, then this lets us remove it
+        # 如果应用类型失败，此方法允许我们将其移除
         if typename not in self._types:
             return
 
         type_index = self._types.index(typename)
-        # delete by index because we have it
+        # 因为我们有索引，所以按索引删除
         del self._types[type_index]
         self._working_types.remove(typename)
         self._rejected_types.add(typename)
@@ -723,9 +712,9 @@ class FilteredMessageModel(ListModel, ListDataListener):
             if type_name not in self._types and self._check_type(type_name):
                 self._types.append(type_name)
 
-        # not sure how much effort we want to put into the events. could just mark everything as changed all the time
+        # 不确定我们要投入多少精力处理事件。可以一直将所有内容标记为已更改
         if len(self._types) > interval_start:
-            # if we didn't remove anything, then  just issue an added event?
+            # 如果没有删除任何内容，则仅发出添加事件？
             event = ListDataEvent(
                 self, ListDataEvent.INTERVAL_ADDED, interval_start, len(self._types) - 1
             )
@@ -744,15 +733,14 @@ class FilteredMessageModel(ListModel, ListDataListener):
                 listener.intervalRemoved(event)
 
     def _check_type(self, typename):
-        # TODO this hangs the UI as well
-        # TODO would be better to check by comparing typedefs instead of trying
-        # to decode
+        # TODO 此操作也会挂起 UI
+        # TODO 通过比较 typedef 来检查比尝试解码更好
         if typename in self._rejected_types:
             return False
         if typename in self._working_types:
             return True
 
-        # if we don't have data yet, just quit early
+        # 如果还没有数据，提前退出
         if not self._data:
             return False
         if typename not in default_config.known_types:
@@ -779,7 +767,7 @@ class FilteredMessageModel(ListModel, ListDataListener):
     def removeListDataListener(self, listener):
         self._listeners.remove(listener)
 
-    # data listener stuff
+    # 数据监听器相关
     def contentsChanged(self, event):
         self.update_types()
 
@@ -791,7 +779,7 @@ class FilteredMessageModel(ListModel, ListDataListener):
 
 
 class MessageInfo:
-    """This class parses the data we get from burp for us to use throughout the processing"""
+    """此类解析从 Burp 获取的数据，供我们在整个处理过程中使用"""
 
     def __init__(self, content, is_request, helpers, controller):
         self.is_request = is_request
@@ -823,9 +811,7 @@ class MessageInfo:
             return self.response_content_info
 
     def _message_hash(self, helpers):
-        """Compute an "identifier" for the message which is used for sticky
-        type definitions. User modifiable
-        """
+        """计算消息的"标识符"，用于粘性类型定义。用户可修改"""
         message_hash = None
         if "hash_message" in dir(user_funcs):
             message_hash = user_funcs.hash_message(
@@ -837,7 +823,7 @@ class MessageInfo:
                 self.request_content_info,
             )
         if message_hash is None:
-            # Base it off just the URL and request/response
+            # 仅基于 URL 和请求/响应
             url = self.request_content_info.getUrl()
             message_hash = ":".join(
                 [url.getAuthority(), url.getPath(), str(self.is_request)]
@@ -847,13 +833,13 @@ class MessageInfo:
 
 
 class PayloadInfo:
-    """This class stores the latest payload data and functions to transform it to or from a HTTP message"""
+    """此类存储最新的 payload 数据以及将其与 HTTP 消息互相转换的函数"""
 
     def __init__(self, message_info, helpers):
-        self.raw_data = None  # Raw data from payload
-        # These attributes must be set from outside this payload
+        self.raw_data = None  # 来自 payload 的原始数据
+        # 这些属性必须在此类外部设置
         self.encoding_alg = None
-        self.protobuf_data = None  # last known good encoded protobuf payload
+        self.protobuf_data = None  # 最后已知的正确编码的 protobuf payload
         self.parse_http(message_info, helpers)
 
     def parse_http(self, message_info, helpers):
@@ -897,7 +883,7 @@ class PayloadInfo:
 
 
 class LastGoodData:
-    """This class stores data about the last now valid combination of message and typedef"""
+    """此类存储关于上一个有效的消息和 typedef 组合的数据"""
 
     def __init__(self, message, typedef, source):
         self.message = message

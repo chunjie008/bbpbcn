@@ -1,8 +1,7 @@
-"""The `blackboxprotobuf.lib` module provides APIs for decoding and encoding
-binary protobuf messages.
+"""`blackboxprotobuf.lib` 模块提供用于解码和编码二进制 protobuf 消息的 API。
 
-This module re-exports the functions defined in `blackboxprotobuf.lib.api`,
-which provides a high level interface for the module and convenience functions.
+此模块重新导出 `blackboxprotobuf.lib.api` 中定义的函数，
+这些函数提供了模块的高级接口和便捷函数。
 """
 
 # Copyright (c) 2018-2024 NCC Group Plc

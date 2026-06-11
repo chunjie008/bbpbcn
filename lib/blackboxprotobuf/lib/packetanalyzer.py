@@ -55,7 +55,7 @@ def _parse_all(hex_strings):
         raw = _parse_hex(h)
         packets.append(Packet(i + 1, h, raw))
     if not packets:
-        raise ValueError("no valid hex packets provided")
+        raise ValueError("未提供有效的十六进制数据包")
     return packets
 
 
@@ -330,12 +330,12 @@ def _hex_row(raw_bytes):
 
 def _format_field_candidate(label, candidate, show_values=True):
     if not candidate:
-        return f"  {label}: (none detected)\n"
+        return f"  {label}: （未检测到）\n"
     lines = [f"  {label}:"]
-    lines.append(f"    {candidate['type']} @ offset {candidate['offset']}")
+    lines.append(f"    {candidate['type']} @ 偏移 {candidate['offset']}")
     if show_values:
-        lines.append(f"    values: {candidate['values']}")
-    lines.append(f"    score: {candidate['score']}")
+        lines.append(f"    值: {candidate['values']}")
+    lines.append(f"    得分: {candidate['score']}")
     return '\n'.join(lines) + '\n'
 
 
@@ -343,10 +343,10 @@ def format_text(result):
     # type: (Dict) -> str
     lines = []
     lines.append('')
-    lines.append('  Packet Analyze')
+    lines.append('  数据包分析')
     lines.append('  ' + '\u2500' * 58)
     lines.append('')
-    lines.append(f'  Endian: {result["endian"]},  Packets: {result["packet_count"]}')
+    lines.append(f'  字节序: {result["endian"]},  数据包数: {result["packet_count"]}')
     lines.append('')
 
     for p in result['packets']:
@@ -354,7 +354,7 @@ def format_text(result):
         lines.append(f'  #{p["index"]} ({p["size"]} B): {hex_str}')
 
     lines.append('')
-    lines.append('  Byte Mask (C=constant across all packets, V=variable):')
+    lines.append('  字节掩码（C=所有数据包恒定，V=可变）:')
     mask = result['byte_mask']
 
     header = '      '
@@ -370,40 +370,40 @@ def format_text(result):
         lines.append(row)
 
     lines.append('')
-    lines.append('  Candidates')
+    lines.append('  候选')
     lines.append('  ' + '\u2500' * 58)
     lines.append('')
 
     best = result.get('best_length_field')
-    lines.append(_format_field_candidate('Length Field', best))
+    lines.append(_format_field_candidate('长度字段', best))
     if best:
         conf = _confidence(best['score'], 50)
         if best.get('match_type') == 'exact_total':
-            lines.append(f'    match: values == packet total length [confidence: {conf}]')
+            lines.append(f'    匹配: 值 == 数据包总长度 [置信度: {conf}]')
         elif best.get('match_type') == 'exact_payload':
-            lines.append(f'    match: values == payload length (total - offset - size) [confidence: {conf}]')
+            lines.append(f'    匹配: 值 == payload 长度（总长度 - 偏移 - 大小） [置信度: {conf}]')
         elif best.get('match_type') == 'exact_lenfield_excluded':
-            lines.append(f'    match: values == total - 2 (len field excludes itself) [confidence: {conf}]')
+            lines.append(f'    匹配: 值 == 总长度 - 2（长度字段排除自身） [置信度: {conf}]')
         else:
-            lines.append(f'    match: partial [confidence: {conf}]')
+            lines.append(f'    匹配: 部分匹配 [置信度: {conf}]')
         lines.append('')
 
     best = result.get('best_msgid_field')
-    lines.append(_format_field_candidate('MsgID Field', best))
+    lines.append(_format_field_candidate('消息ID字段', best))
     if best:
         conf = _confidence(best['score'], 15)
-        lines.append(f'    unique values: {best["unique_count"]} [confidence: {conf}]')
+        lines.append(f'    唯一值数: {best["unique_count"]} [置信度: {conf}]')
         lines.append('')
 
     best = result.get('best_uid_field')
-    lines.append(_format_field_candidate('UID Field', best))
+    lines.append(_format_field_candidate('唯一ID字段', best))
     if best:
         conf = _confidence(best['score'], 10)
-        lines.append(f'    unique values: {best["unique_count"]} [confidence: {conf}]')
+        lines.append(f'    唯一值数: {best["unique_count"]} [置信度: {conf}]')
         lines.append('')
 
     lines.append('')
-    lines.append('  Structure')
+    lines.append('  结构')
     lines.append('  ' + '\u2500' * 58)
     lines.append('')
 
@@ -414,13 +414,13 @@ def format_text(result):
 
     parts = []
     all_fields = []
-    for label, field in [('length', best_len), ('msgid', best_msgid), ('uid', best_uid)]:
+    for label, field in [('长度', best_len), ('消息ID', best_msgid), ('唯一ID', best_uid)]:
         if field:
             all_fields.append((field['offset'], field['offset'] + field['size'] - 1, field['type'], label))
     all_fields.sort(key=lambda x: x[0])
     for start, end, typ, label in all_fields:
         parts.append(f'    [{start}-{end}] {typ}  {label}')
-    parts.append(f'    [{hdr_size}-*] bytes  payload')
+    parts.append(f'    [{hdr_size}-*] 字节  payload')
 
     for p in parts:
         lines.append(p)
@@ -432,15 +432,15 @@ def format_text(result):
     lines.append('  ' + '\u2500' * 58)
     lines.append('')
     if proto_results:
-        lines.append(f'    {valid_count}/{len(proto_results)} packets valid protobuf')
+        lines.append(f'    {valid_count}/{len(proto_results)} 个数据包为有效 protobuf')
         for r in proto_results:
-            status = 'valid' if r['valid'] else 'invalid'
+            status = '有效' if r['valid'] else '无效'
             lines.append(f'    #{r["packet"]}: {status}')
         if valid_count > 0 and valid_count == len(proto_results):
             lines.append('')
-            lines.append(f'    Payload is fully valid protobuf -- use bbpb decode to inspect')
+            lines.append(f'    Payload 是完全有效的 protobuf -- 使用 bbpb decode 查看')
     else:
-        lines.append('    (no payload to analyze)')
+        lines.append('    （无 payload 可分析）')
 
     return '\n'.join(lines) + '\n'
 

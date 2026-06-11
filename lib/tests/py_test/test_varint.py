@@ -30,7 +30,7 @@ from blackboxprotobuf.lib.types import varint
 from blackboxprotobuf.lib.exceptions import EncoderException, DecoderException
 
 
-# Test that for any given bytes, we don't alter them when decoding as a varint
+# 测试对于任意给定字节，以 varint 解码时不会改变它们
 @given(x=st.binary(max_size=10))
 @example(x=b"\x80\x01")
 @example(x=b"\x80\x81")
@@ -48,7 +48,7 @@ def test_varint_idem_uvarint(x):
     assert encoded == x[:pos]
 
 
-# Test that for any given bytes, we don't alter them when decoding as a varint
+# 测试对于任意给定字节，以 varint 解码时不会改变它们
 @given(x=st.binary(min_size=10, max_size=10))
 @example(x=b"\x80\x01")
 @example(x=b"\x80\x81")
@@ -66,7 +66,7 @@ def test_varint_idem_varint(x):
     assert encoded == x[:pos]
 
 
-# Test that for any given bytes, we don't alter them when decoding as a varint
+# 测试对于任意给定字节，以 varint 解码时不会改变它们
 @given(x=st.binary(max_size=10))
 @example(x=b"\x80\x01")
 @example(x=b"\x80\x81")
@@ -74,7 +74,7 @@ def test_varint_idem_varint(x):
 @example(x=b"\x80\x80\x80\x80\x80\x80\x80\x80\x81\x00")
 @example(
     x=b"\x80\x80\x80\x80\x80\x80\x80\x80\x81\x80"
-)  # I think this is overflowing and getting truncated on decode
+)  # 我认为这个在解码时会溢出并被截断
 def test_varint_idem_svarint(x):
     try:
         decoded, pos = varint.decode_svarint(x, 0)
@@ -85,7 +85,7 @@ def test_varint_idem_svarint(x):
     assert encoded == x[:pos]
 
 
-# Inverse checks. Ensure a value encoded by bbp decodes to the same value
+# 逆运算检查。确保 bbp 编码的值解码后得到相同的值
 @given(x=strategies.input_map["uint"])
 @example(x=18446744073709551615)
 def test_uvarint_inverse(x):
@@ -142,12 +142,12 @@ def _gen_append_bytearray(arr):
         elif isinstance(x, bytes):
             arr.extend(x)
         else:
-            raise EncoderException("Unknown type returned by protobuf library")
+            raise EncoderException("protobuf 库返回了未知类型")
 
     return _append_bytearray
 
 
-# Test our varint functions against google
+# 针对 google 的 varint 函数测试我们的
 @given(x=strategies.input_map["uint"])
 def test_uvarint_encode(x):
     encoded_google = bytearray()

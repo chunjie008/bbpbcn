@@ -34,27 +34,27 @@ def test_grpc():
     assert data == bytearray([0xAA])
     assert encoding == "grpc"
 
-    # Compression flag
+    # 压缩标志
     with pytest.raises(BlackboxProtobufException):
         message = bytearray([0x01, 0x00, 0x00, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
-    # Unknown flag
+    # 未知标志
     with pytest.raises(BlackboxProtobufException):
         message = bytearray([0x11, 0x00, 0x00, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
-    # Incorrect length
+    # 长度错误
     with pytest.raises(BlackboxProtobufException):
         message = bytearray([0x00, 0x00, 0x01, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
-    # Incorrect length
+    # 长度错误
     with pytest.raises(BlackboxProtobufException):
         message = bytearray([0x00, 0x00, 0x00, 0x00, 0x01, 0xAA, 0xBB])
         data = grpc.decode_grpc(message)
 
-    # Empty
+    # 空消息
     message = bytearray([0x00, 0x00, 0x00, 0x00, 0x00])
     data, encoding = grpc.decode_grpc(message)
     assert len(data) == 0
@@ -63,16 +63,16 @@ def test_grpc():
 
 @given(payloads=st.lists(st.binary(), min_size=2))
 def test_grpc_multiple(payloads):
-    # Test grpc encoding with multiple payloads
+    # 测试包含多个 payload 的 grpc 编码
 
-    # Manually encode multiple grpc payloads and string them together
+    # 手动编码多个 grpc payload 并将它们拼接在一起
     encoded = b""
     for payload in payloads:
         encoded += grpc.encode_grpc(payload)
 
     assert grpc.is_grpc(encoded)
 
-    # Make sure we can decode bytes with multiple grpc
+    # 确保我们可以解码包含多个 grpc 的字节
     decoded, encoding = grpc.decode_grpc(encoded)
     assert isinstance(decoded, list)
     assert len(decoded) == len(payloads)
@@ -80,7 +80,7 @@ def test_grpc_multiple(payloads):
     for x, y in zip(decoded, payloads):
         assert x == y
 
-    # Make sure we can encode to the same bytes
+    # 确保我们可以编码为相同的字节
     encoded2 = grpc.encode_grpc(decoded)
     assert encoded == encoded2
 

@@ -26,7 +26,7 @@ import strategies
 from blackboxprotobuf.lib.types import fixed
 
 
-# Inverse checks. Ensure a value encoded by bbp decodes to the same value
+# 逆运算检查。确保 bbp 编码的值解码后得到相同的值
 @given(x=strategies.input_map["fixed32"])
 def test_fixed32_inverse(x):
     encoded = fixed.encode_fixed32(x)
@@ -118,8 +118,8 @@ def test_float_inverse(x):
         assert decoded == x
 
 
-# Would be nice, but not a default type, so probably ok
-# Probably asking for trouble to have a float decode then encode the same
+# 虽然测试 float_idem 不错，但它不是默认类型，所以可能没问题
+# 对 float 进行解码再编码得到相同结果可能有问题
 # @given(x=st.binary(min_size=4))
 # def test_float_idem(x):
 #    try:

@@ -56,7 +56,7 @@ def message_typedef_gen(draw, max_depth=3, anon=False, types=None, named_fields=
     field_numbers = draw(
         st.lists(st.integers(min_value=1, max_value=2000).map(str), min_size=1)
     )
-    # pre-generate names so we can be sure they're unique
+    # 预生成名称，确保名称唯一
     field_names = draw(
         st.lists(
             st.from_regex(blackboxprotobuf.NAME_REGEX),
@@ -88,7 +88,7 @@ def message_typedef_gen(draw, max_depth=3, anon=False, types=None, named_fields=
             "message",
             "string",
             "bytes",
-        ]:  # repeated fields can't be tested easily with anonymous types due to the type guessing
+        ]:  # 由于类型猜测，重复字段无法使用匿名类型轻松测试
             output[field_number]["seen_repeated"] = False
         else:
             output[field_number]["seen_repeated"] = draw(st.booleans())
@@ -103,7 +103,7 @@ def message_typedef_gen(draw, max_depth=3, anon=False, types=None, named_fields=
                 )
             )
 
-        # decide whether to give it a name
+        # 决定是否给字段命名
         if named_fields and not anon and draw(st.booleans()):
             output[field_number]["name"] = six.ensure_text(field_name)
 
@@ -134,15 +134,14 @@ def gen_message_data(draw, type_def):
 
 
 @st.composite
-# if anon is True, typedef will only have "default" types that it will decode
-# to without a typedef
+# 如果 anon 为 True，typedef 将只包含在没有 typedef 时解码会用到的"默认"类型
 def gen_message(draw, anon=False, named_fields=True):
     allowed_types = None
     if anon:
         allowed_types = list(
             filter(lambda x: x is not None, type_maps.WIRE_TYPE_DEFAULTS.values())
         )
-        # add length delim wiretypes
+        # 添加长度分隔线的 wire types
         allowed_types += ["message", "string", "bytes"]
     type_def = draw(
         message_typedef_gen(anon=anon, types=allowed_types, named_fields=named_fields)
@@ -151,7 +150,7 @@ def gen_message(draw, anon=False, named_fields=True):
     return type_def, message
 
 
-# Map types to generators
+# 将类型映射到生成器
 input_map = {
     "fixed32": st.integers(min_value=0, max_value=(2**32) - 1),
     "sfixed32": st.integers(min_value=-(2**31), max_value=(2**31) - 1),

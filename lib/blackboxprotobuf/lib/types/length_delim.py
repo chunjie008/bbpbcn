@@ -1,4 +1,4 @@
-"""Module for encoding and decoding length delimited fields"""
+"""用于编码和解码长度分隔（length delimited）字段的模块"""
 
 # Copyright (c) 2018-2024 NCC Group Plc
 #
@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 def encode_string(value):
     # type: (Any) -> bytes
-    """Encode a string as a length delimited byte array"""
+    """将字符串编码为长度分隔的字节数组"""
     try:
         value = six.ensure_text(value)
     except TypeError as exc:
@@ -66,7 +66,7 @@ def encode_string(value):
 
 def encode_bytes(value):
     # type: (Any) -> bytes
-    """Encode a length delimited byte array"""
+    """编码一个长度分隔的字节数组"""
     if isinstance(value, bytearray):
         value = bytes(value)
     try:
@@ -87,7 +87,7 @@ def encode_bytes(value):
 
 def decode_bytes(buf, pos):
     # type: (bytes, int) -> Tuple[bytes, int]
-    """Decode a length delimited bytes array from buf"""
+    """从 buf 中解码一个长度分隔的字节数组"""
     length, pos = varint.decode_varint(buf, pos)
     end = pos + length
     try:
@@ -107,7 +107,7 @@ def decode_bytes(buf, pos):
 
 def encode_bytes_hex(value):
     # type: (Any) -> bytes
-    """Encode a length delimited byte array represented by a hex string"""
+    """编码一个由十六进制字符串表示的长度分隔字节数组"""
     try:
         return encode_bytes(binascii.unhexlify(value))
     except (TypeError, binascii.Error) as exc:
@@ -118,18 +118,18 @@ def encode_bytes_hex(value):
 
 def decode_bytes_hex(buf, pos):
     # type: (bytes, int) -> Tuple[bytes, int]
-    """Decode a length delimited byte array from buf and return a hex encoded string"""
+    """从 buf 中解码一个长度分隔的字节数组，并返回十六进制编码的字符串"""
     value, pos = decode_bytes(buf, pos)
     return binascii.hexlify(value), pos
 
 
 def decode_string(value, pos):
     # type: (bytes, int) -> Tuple[str, int]
-    """Decode a length delimited byte array as a string"""
+    """将长度分隔的字节数组解码为字符串"""
     length, pos = varint.decode_varint(value, pos)
     end = pos + length
     try:
-        # backslash escaping isn't reversible easily
+        # 反斜杠转义不可逆
         return value[pos:end].decode("utf-8"), end
     except (TypeError, UnicodeDecodeError) as exc:
         six.raise_from(
@@ -139,7 +139,7 @@ def decode_string(value, pos):
 
 def encode_tag(field_number, wire_type):
     # type: (int, int) -> bytes
-    # Not checking bounds here, should be check before
+    # 此处不检查边界，应在之前检查
     tag_number = (field_number << 3) | wire_type
     return varint.encode_uvarint(tag_number)
 
@@ -154,7 +154,7 @@ def decode_tag(buf, pos):
 
 def encode_message(data, config, typedef, path=None, field_order=None):
     # type: (Message, Config, TypeDef, Optional[List[str]], Optional[List[str]]) -> bytes
-    """Encode a Python dictionary to a binary protobuf message"""
+    """将 Python 字典编码为二进制 protobuf 消息"""
     output = bytearray()
     if path is None:
         path = []
@@ -166,8 +166,8 @@ def encode_message(data, config, typedef, path=None, field_order=None):
             config, typedef, path, field_id, value
         )
 
-        # In case the field number is represented in multiple locations in data
-        # (eg. as an int, as name, as a string with an int)
+        # 如果字段编号在数据中表示为多个位置
+        # （例如，作为 int、作为名称、作为带有 int 的字符串）
         field_outputs.setdefault(field_number, []).extend(outputs)
         output_len += len(outputs)
 
@@ -177,27 +177,25 @@ def encode_message(data, config, typedef, path=None, field_order=None):
             and field_order is not None
             and len(field_order) == output_len
         ):
-            # check for old typedefs which had field_order as a tuple
+            # 检查旧的 typedef（其中 field_order 是元组）
             if isinstance(field_order[0], tuple):
                 field_order = [x[0] for x in field_order]
             for field_number in field_order:
                 try:
                     output += field_outputs[field_number].pop(0)
                 except (IndexError, KeyError):
-                    # If these don't match up despite us checking the overall
-                    # length, then we probably have something weird going on
-                    # with field naming.
-                    # This might mean ordering is off from the original, but
-                    # should break real protobuf messages
+                    # 如果在我们检查了总长度后仍然不匹配，
+                    # 那么可能字段命名有些异常。
+                    # 这可能意味着顺序与原始顺序不一致，
+                    # 但应该不会破坏真正的 protobuf 消息
                     logger.warning(
                         "The field_order list does not match the fields from _encode_message_field"
                     )
-                    # If we're hitting a mismatch between the field order and
-                    # what data we have, then just bail. We can encode the rest
-                    # normally
+                    # 如果遇到字段顺序与实际数据不匹配，
+                    # 则直接退出。剩下的可以正常编码
                     break
 
-        # Group  together elements in an array
+        # 将数组中的元素分组
         for values in field_outputs.values():
             for value in values:
                 output += value
@@ -254,16 +252,16 @@ def _encode_message_field(config, typedef, path, field_id, value):
                 "Encoder not implemented for %s" % field_type, field_path
             )
 
-    # Encode the tag
+    # 编码标签（tag）
     tag = encode_tag(
         int(field_number), blackboxprotobuf.lib.types.WIRETYPES[field_type]
     )
 
     outputs = []
     try:
-        # Repeated values we'll encode each one separately and add them to the outputs list
-        # Packed values take in a list, but encode them into a single length
-        # delimited field, so we handle those as a non-repeated value
+        # 重复值将分别编码并添加到 outputs 列表中
+        # 打包值接收一个列表，但将它们编码为单个长度
+        # 分隔字段，因此我们将它们作为非重复值处理
         if isinstance(value, list) and not field_type.startswith("packed_"):
             for repeated in value:
                 outputs.append(tag + field_encoder(repeated))
@@ -279,7 +277,7 @@ def _encode_message_field(config, typedef, path, field_id, value):
 
 def decode_message(buf, config, typedef=None, pos=0, end=None, depth=0, path=None):
     # type: (bytes, Config, Optional[TypeDef], int, Optional[int], int, Optional[List[str]]) -> Tuple[Message, TypeDef, List[str], int]
-    """Decode a protobuf message with no length prefix"""
+    """解码不带长度前缀的 protobuf 消息"""
     if end is None:
         end = len(buf)
 
@@ -295,7 +293,7 @@ def decode_message(buf, config, typedef=None, pos=0, end=None, depth=0, path=Non
 
     grouped_fields, field_order, pos = _group_by_number(buf, pos, end, path)
     for field_number, (wire_type, buffers) in grouped_fields.items():
-        # wire_type should already be validated by _group_by_number
+        # wire_type 应由 _group_by_number 验证
 
         field_path = path[:] + [field_number]
 
@@ -308,7 +306,7 @@ def decode_message(buf, config, typedef=None, pos=0, end=None, depth=0, path=Non
         else:
             fielddef = fielddef_pair[1]
 
-        # Decode messages (which may have multiple typedefs)  or unknown length delimited fields
+        # 解码消息（可能有多个 typedef）或未知的长度分隔字段
         if wire_type == wiretypes.LENGTH_DELIMITED and not isinstance(
             fielddef.lookup_field_type_number("0", config, field_path), six.string_types
         ):
@@ -316,7 +314,7 @@ def decode_message(buf, config, typedef=None, pos=0, end=None, depth=0, path=Non
                 buffers, fielddef, config, field_path
             )
 
-            # Merge length delim field into the output map
+            # 将长度分隔字段合并到输出映射中
             for field_key, field_outputs in output_map.items():
                 output.setdefault(field_key, []).extend(field_outputs)
             seen_repeated[fielddef.name] = new_fielddef.seen_repeated
@@ -330,7 +328,7 @@ def decode_message(buf, config, typedef=None, pos=0, end=None, depth=0, path=Non
             output.setdefault(field_key, []).extend(field_outputs)
             seen_repeated[fielddef.name] = new_fielddef.seen_repeated
 
-            # Save the field typedef/type back to the typedef
+            # 将字段 typedef/type 存回 typedef
             mut_typedef.set_fielddef(field_number, new_fielddef)
 
     _simplify_output(output, seen_repeated)
@@ -343,7 +341,7 @@ def _decode_standard_field(wire_type, buffers, fielddef, config, field_path):
     field_alt_type_id = None
     for alt_type_id, field_type in fielddef.resolve_types(config, field_path).items():
         if isinstance(field_type, TypeDef):
-            # Skip message types
+            # 跳过消息类型
             continue
         if (
             not isinstance(field_type, six.string_types)
@@ -365,9 +363,9 @@ def _decode_standard_field(wire_type, buffers, fielddef, config, field_path):
             field_outputs = [decoder(buf, 0)[0] for buf in buffers]
             field_alt_type_id = alt_type_id
         except BlackboxProtobufException as exc:
-            # Error decoding, try next one if we have one
+            # 解码出错，尝试下一个（如果有）
             continue
-        # Decoding worked
+        # 解码成功
         break
 
     if field_outputs is None:
@@ -388,11 +386,11 @@ def _decode_standard_field(wire_type, buffers, fielddef, config, field_path):
             path=field_path,
         )
     if isinstance(field_type, six.string_types) and field_type.startswith("packed_"):
-        # Packed decoding will return a list of lists
+        # 打包解码将返回列表的列表
         field_outputs = [y for x in field_outputs for y in x]
         mut_fielddef.mark_repeated()
-    # Mark repeated if we have have more than one
-    # Don't need to worry if it's already repeated
+    # 如果有多个则标记为重复
+    # 如果已经标记为重复则无需担心
     elif len(field_outputs) > 1:
         mut_fielddef.mark_repeated()
 
@@ -401,8 +399,8 @@ def _decode_standard_field(wire_type, buffers, fielddef, config, field_path):
 
 def _simplify_output(output, seen_repeated):
     # type: (Message, Dict[str, bool]) -> None
-    # If any outputs only have one element, convert them from a list to solo
-    # Mutates output
+    # 如果任何输出只有一个元素，则从列表转换为单个值
+    # 会修改 output
     for field_key, field_outputs in output.items():
         if isinstance(field_outputs, list) and len(field_outputs) == 1:
             field_name = (
@@ -416,12 +414,12 @@ def _simplify_output(output, seen_repeated):
 
 def _group_by_number(buf, pos, end, path):
     # type: (bytes, int, int, List[str]) -> Tuple[Dict[str, Tuple[int, List[bytes]]], List[str], int]
-    # Parse through the whole message and split into buffers based on wire
-    # type and organized by field number. This forces us to parse the whole
-    # message at once, but I think we're doing that anyway. This catches size
-    # errors early as well, which is usually the best indicator of if it's a
-    # protobuf message or not.
-    # Returns a dictionary like:
+    # 解析整个消息，根据线缆类型（wire type）分割成缓冲区，
+    # 并按字段编号组织。这迫使我们一次性解析整个
+    # 消息，但我觉得我们已经这样做了。这也可以及早捕获大小
+    # 错误，这通常是指示是否为
+    # protobuf 消息的最佳指标。
+    # 返回一个字典，格式如下：
     #     {
     #         "2": (<wiretype>, [<data>])
     #     }
@@ -429,16 +427,16 @@ def _group_by_number(buf, pos, end, path):
     output_map = {}  # type: Dict[str, Tuple[int, List[bytes]]]
     field_order = []
     while pos < end:
-        # Read in a field
+        # 读取一个字段
         field_number, wire_type, pos = decode_tag(buf, pos)
 
-        # We want field numbers as strings everywhere
+        # 我们希望字段编号在所有地方都作为字符串
         field_id = six.ensure_text(str(field_number))
 
         field_path = path[:] + [field_id]
 
         if field_id in output_map and output_map[field_id][0] != wire_type:
-            # This should never happen
+            # 这种情况不应该发生
             raise DecoderException(
                 "Field %s has mistmatched wiretypes. Previous: %s Now: %s"
                 % (field_id, output_map[field_id][0], wire_type),
@@ -447,7 +445,7 @@ def _group_by_number(buf, pos, end, path):
 
         length = None
         if wire_type == wiretypes.VARINT:
-            # We actually have to read in the whole varint to figure out it's size
+            # 实际上需要读取整个 varint 才能确定其大小
             _, new_pos = varint.decode_uvarint(buf, pos)
             length = new_pos - pos
         elif wire_type == wiretypes.FIXED32:
@@ -455,8 +453,8 @@ def _group_by_number(buf, pos, end, path):
         elif wire_type == wiretypes.FIXED64:
             length = 8
         elif wire_type == wiretypes.LENGTH_DELIMITED:
-            # Read the length from the start of the message
-            # add on the length of the length tag as well
+            # 从消息开头读取长度
+            # 同时加上长度标签本身的长度
             bytes_length, new_pos = varint.decode_varint(buf, pos)
             length = bytes_length + (new_pos - pos)
         elif wire_type in [
@@ -488,28 +486,27 @@ def _group_by_number(buf, pos, end, path):
 
 def _try_decode_lendelim_fields(buffers, fielddef, config, path):
     # type: (List[bytes], FieldDef, Config, List[str]) -> Tuple[Message, FieldDef]
-    # Mutates message_output
+    # 会修改 message_output
 
-    # This is where things get weird
-    # To start, since we want to decode messages and not treat every
-    # embedded message as bytes, we have to guess if it's a message or
-    # not.
-    # Unlike other types, we can't assume our message types are
-    # consistent across the tree or even within the same message.
-    # A field could be a bytes type that that decodes to multiple different
-    # messages that don't have the same type definition. This is where
-    # 'alt_typedefs' let us say that these are the different message types
-    # we've seen for this one field.
-    # In general, if something decodes as a message once, the rest should too
-    # and we can enforce that across a single message, but not multiple
-    # messages.
-    # This is going to change the definition of "alt_typedefs" a bit from just
-    # alternate message type definitions to also allowing downgrading to
-    # 'bytes' or string with an 'alt_type' if it doesn't parse
+    # 这里开始变得复杂
+    # 首先，由于我们希望解码消息而不是将每个
+    # 嵌入式消息视为字节，我们必须猜测它是否是消息。
+    # 与其他类型不同，我们不能假设消息类型在
+    # 整个树中甚至在同一消息内是一致的。
+    # 一个字段可能是 bytes 类型，解码为多个不同的
+    # 消息，而这些消息没有相同的类型定义。这就是
+    # 'alt_typedefs' 让我们能够指定该字段
+    # 所见过的不同消息类型。
+    # 一般来说，如果某个东西曾成功解码为消息，其余也应该可以，
+    # 我们可以在单条消息内强制执行这一点，但不能跨多条
+    # 消息。
+    # 这将稍微改变 "alt_typedefs" 的定义，从仅仅
+    # 替代消息类型定义，到也允许降级为
+    # 'bytes' 或带有 'alt_type' 的字符串（如果解析失败）
 
     message_output = {}  # type: Message
 
-    # TODO potential performance improvement: Do a first pass with {} or just group by number and use the results to validate if it's even valid protobuf and quick match wire_types against typedefs
+    # TODO 潜在性能改进：使用 {} 进行第一遍扫描，或按编号分组，使用结果验证是否为有效的 protobuf 并快速将 wire_types 与 typedefs 匹配
     try:
         outputs_map = {}  # type: Dict[str, Any]
         field_order = []  # type: List[str]
@@ -517,8 +514,8 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
         next_alt_type_id = int(fielddef.next_alt_type_id())
         field_types = fielddef.resolve_types(config, path)
 
-        # We don't want any mutable changes within this loop, we want
-        # everything to rollback if it fails
+        # 我们不希望在这个循环内发生任何可变更改，我们希望
+        # 如果失败，所有内容都能回滚
         for buf in buffers:
             output = None
             output_typedef = None
@@ -528,7 +525,7 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
             for alt_type_id, field_type in sorted(
                 field_types.items(), key=lambda x: int(x[0])
             ):
-                # Skip non message types
+                # 跳过非消息类型
                 if not isinstance(field_type, TypeDef):
                     continue
 
@@ -540,14 +537,14 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
                         _,
                     ) = decode_lendelim_message(buf, config, field_type)
                 except Exception as exc:
-                    # If we get an exception, then this isn't the right typedef, try the next
+                    # 如果出现异常，则说明这不是正确的 typedef，尝试下一个
                     continue
 
                 output_typedef_num = alt_type_id
-                # If we didn't get an exception, then we found the right type
+                # 如果没有异常，则找到了正确的类型
                 break
-            # If we didn't find a type above, then try an anonymous type
-            # If this fails, we fall back to string and bytes for all types
+            # 如果上面没有找到类型，则尝试匿名类型
+            # 如果这仍然失败，则对所有类型回退到 string 和 bytes
             if output is None:
                 output, output_typedef, new_field_order, _ = decode_lendelim_message(
                     buf, config, None
@@ -560,23 +557,23 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
                     "Could not find an output_typedef or output_typedef_num. This should not happen under any circumstances."
                 )
 
-            # save the output or typedef we found
+            # 保存找到的 output 或 typedef
             field_types[output_typedef_num] = output_typedef
             outputs_map.setdefault(output_typedef_num, []).append(output)
 
-            # we should technically have a different field order for each instance of the data
-            # but that would require a very messy JSON which we're trying to avoid
+            # 理论上，每个数据实例应有不同的字段顺序
+            # 但这需要非常混乱的 JSON，这是我们试图避免的
             if len(new_field_order) > len(field_order):
                 field_order = new_field_order
 
-        # was able to decode everything as a message
+        # 成功将所有内容解码为消息
         mut_fielddef = fielddef.make_mutable()
         mut_fielddef.set_types(field_types)
 
         if config.preserve_field_order:
             mut_fielddef.set_field_order(field_order)
 
-        # messages get set as "key-alt_number"
+        # 消息被设置为 "key-alt_number"
         for output_typedef_num, outputs in outputs_map.items():
             output_field_key = mut_fielddef.field_key(output_typedef_num)
 
@@ -584,19 +581,19 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
             if len(outputs) > 1:
                 mut_fielddef.mark_repeated()
 
-        # success, return
+        # 成功，返回
         return message_output, mut_fielddef
     except DecoderException as exc:
-        # this should be pretty common, don't be noisy or throw an exception
+        # 这种情况应该很常见，不要发出噪音或抛出异常
         logger.debug(
             "Could not decode a buffer for field (%s) as a message: %s",
             path,
             exc,
         )
 
-    # Decoding as a message did not work, try strings and then the configured binary type
-    # By default, default_binary_type will be redundant with bytes, but we want
-    # to fall back on bytes if default_binary_type fails for any reason
+    # 作为消息解码失败，尝试字符串，然后是配置的二进制类型
+    # 默认情况下，default_binary_type 将与 bytes 冗余，但我们希望
+    # 如果 default_binary_type 因任何原因失败，回退到 bytes
     for target_type in ["string", config.default_binary_type, "bytes"]:
         try:
             outputs = []
@@ -606,7 +603,7 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
                 outputs.append(output)
 
             field_alt_type_id = None
-            # check if the type is already known
+            # 检查类型是否已知
             field_types = fielddef.resolve_types(config, path)
             for alt_type_id, field_type in field_types.items():
                 if field_type == target_type:
@@ -624,13 +621,13 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
         except DecoderException:
             continue
 
-    # This should never happen, we should always be able to use bytes
+    # 这不应该发生，我们应该总是能够使用 bytes
     raise DecoderException("Unable to decode field with typedef", path=path)
 
 
 def encode_lendelim_message(data, config, typedef, path=None, field_order=None):
     # type: (Message, Config, TypeDef, Optional[List[str]], Optional[List[str]]) -> bytes
-    """Encode data as a length delimited protobuf message"""
+    """将数据编码为长度分隔的 protobuf 消息"""
     message_out = encode_message(
         data, config, typedef, path=path, field_order=field_order
     )
@@ -640,7 +637,7 @@ def encode_lendelim_message(data, config, typedef, path=None, field_order=None):
 
 def decode_lendelim_message(buf, config, typedef=None, pos=0, depth=0, path=None):
     # type: (bytes, Config, Optional[TypeDef], int, int, Optional[List[str]]) -> Tuple[Message, TypeDef, List[str], int]
-    """Deocde a length delimited protobuf message from buf"""
+    """从 buf 解码一条长度分隔的 protobuf 消息"""
     length, pos = varint.decode_varint(buf, pos)
     ret = decode_message(
         buf, config, typedef, pos, pos + length, depth=depth, path=path
@@ -650,11 +647,11 @@ def decode_lendelim_message(buf, config, typedef=None, pos=0, depth=0, path=None
 
 def generate_packed_encoder(wrapped_encoder):
     # type: (Callable[[Any], bytes]) -> Callable[[List[Any]], bytes]
-    """Generate an encoder for a packed type based on a base type encoder"""
+    """基于基础类型编码器生成打包类型的编码器"""
 
     def length_wrapper(values):
         # type: (List[Any]) -> bytes
-        # Encode repeat values and prefix with the length
+        # 编码重复值并在前面加上长度前缀
         output = bytearray()
         for value in values:
             output += wrapped_encoder(value)
@@ -666,11 +663,11 @@ def generate_packed_encoder(wrapped_encoder):
 
 def generate_packed_decoder(wrapped_decoder):
     # type: (Callable[[bytes, int], Tuple[Any, int]]) -> Callable[[bytes, int], Tuple[List[Any], int]]
-    """Generate an decoder for a packed type based on a base type decoder"""
+    """基于基础类型解码器生成打包类型的解码器"""
 
     def length_wrapper(buf, pos):
         # type: (bytes, int) -> Tuple[List[Any], int]
-        # Decode repeat values prefixed with the length
+        # 解码以长度前缀开头的重复值
         length, pos = varint.decode_varint(buf, pos)
         end = pos + length
         output = []

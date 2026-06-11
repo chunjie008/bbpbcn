@@ -25,7 +25,7 @@ from blackboxprotobuf.lib.exceptions import BlackboxProtobufException
 if six.PY3:
     from typing import Tuple
 
-# gRPC over HTTP2 spec: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+# gRPC over HTTP2 规范：https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 
 HEADER_LEN = 1 + 4
 
@@ -39,7 +39,7 @@ def is_grpc(payload):
     pos = 0
     while pos < len(payload):
         compression_byte = six.indexbytes(payload, pos)
-        # Change this to support 0x1 once we support compression
+        # 一旦我们支持压缩，将其改为支持 0x1
         if compression_byte != 0:
             return False
         message_length = struct.unpack_from(">I", payload[pos + 1 : pos + 5])[0]
@@ -52,7 +52,7 @@ def is_grpc(payload):
 
 def decode_grpc(payload):
     # type: (bytes) -> Tuple[bytes | list[bytes], str]
-    """Decode GRPC. Return the protobuf data"""
+    """解码 GRPC。返回 protobuf 数据"""
     if six.PY2 and isinstance(payload, bytearray):
         payload = bytes(payload)
 
@@ -66,9 +66,9 @@ def decode_grpc(payload):
         pos += 1
         if compression_byte != 0x00:
             if compression_byte == 0x01:
-                # Payload is compressed
-                # If a payload is compressed, the compression method is specified in the `grpc-encoding` header
-                # Options are  "identity" / "gzip" / "deflate" / "snappy" / {custom}
+                # 负载已压缩
+                # 如果负载已压缩，压缩方法在 `grpc-encoding` 头部中指定
+                # 可选值为 "identity" / "gzip" / "deflate" / "snappy" / {自定义}
                 raise BlackboxProtobufException(
                     "Error decoding GRPC. Compressed payloads are not supported"
                 )
@@ -111,8 +111,8 @@ def encode_grpc(data, encoding="grpc"):
 
     payload = bytearray()
     for data in datas:
-        payload.append(0x00)  # No compression
-        payload.extend(struct.pack(">I", len(data)))  # Length
+        payload.append(0x00)  # 无压缩
+        payload.extend(struct.pack(">I", len(data)))  # 长度
         payload.extend(data)
 
     return payload

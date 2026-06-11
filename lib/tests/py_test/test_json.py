@@ -1,4 +1,4 @@
-"""Tests similar to the length_delim or protobuf tests, but make sure we can round trip through the JSON encode/decode """
+"""与 length_delim 或 protobuf 测试类似，但确保我们可以通过 JSON 编码/解码进行往返测试"""
 
 # Copyright (c) 2018-2024 NCC Group Plc
 #
@@ -76,10 +76,9 @@ def test_multiple_encoding(x, n):
 
 @given(x=strategies.gen_message(anon=True))
 def test_anon_json_decode(x):
-    """Create a new encoded message, the try to decode without a typedef into a
-    json, from json back to binary and then  finally decode the message back to
-    the original format. Makes sure json decoding can handle any types and does
-    not change the essage.
+    """创建一个新的编码消息，然后尝试在没有 typedef 的情况下解码为 json，
+    从 json 回到二进制，最后再将消息解码回原始格式。
+    确保 json 解码能处理所有类型且不改变消息的内容。
     """
     config = Config()
     typedef, message = x
@@ -90,7 +89,7 @@ def test_anon_json_decode(x):
         encoded, config=config
     )
     blackboxprotobuf.validate_typedef(typedef_out)
-    note("To Json Typedef: %r" % dict(typedef_out))
+    note("JSON typedef: %r" % dict(typedef_out))
     encoded_json = blackboxprotobuf.protobuf_from_json(
         decoded_json, config=config, message_type=typedef_out
     )
@@ -99,15 +98,15 @@ def test_anon_json_decode(x):
         encoded_json, config=config, message_type=typedef
     )
     blackboxprotobuf.validate_typedef(typedef_out)
-    note("Original message: %r" % message)
-    note("Decoded JSON: %r" % decoded_json)
-    note("Decoded message: %r" % decoded)
-    note("Original typedef: %r" % typedef)
-    note("Decoded typedef: %r" % typedef_out)
+    note("原始消息: %r" % message)
+    note("解码 JSON: %r" % decoded_json)
+    note("解码消息: %r" % decoded)
+    note("原始 typedef: %r" % typedef)
+    note("解码 typedef: %r" % typedef_out)
 
     def check_message(orig, orig_typedef, new, new_typedef):
         for field_number in set(orig.keys()) | set(new.keys()):
-            # verify all fields are there
+            # 验证所有字段都存在
             assert field_number in orig
             assert field_number in orig_typedef
             assert field_number in new
@@ -118,12 +117,12 @@ def test_anon_json_decode(x):
             orig_type = orig_typedef[field_number]["type"]
             new_type = new_typedef[field_number]["type"]
 
-            note("Parsing field# %s" % field_number)
-            note("orig_values: %r" % orig_values)
-            note("new_values: %r" % new_values)
-            note("orig_type: %s" % orig_type)
-            note("new_type: %s" % new_type)
-            # Fields might be lists. Just convert everything to a list
+            note("解析字段# %s" % field_number)
+            note("原始值: %r" % orig_values)
+            note("新值: %r" % new_values)
+            note("原始类型: %s" % orig_type)
+            note("新类型: %s" % new_type)
+            # 字段可能是列表。将所有内容转换为列表
             if not isinstance(orig_values, list):
                 orig_values = [orig_values]
                 assert not isinstance(new_values, list)
@@ -131,12 +130,12 @@ def test_anon_json_decode(x):
             assert isinstance(orig_values, list)
             assert isinstance(new_values, list)
 
-            # if the types don't match, then try to convert them
+            # 如果类型不匹配，尝试转换
             if new_type == "message" and orig_type in ["bytes", "string"]:
-                # if the type is a message, we want to convert the orig type to a message
-                # this isn't ideal, we'll be using the unintended type, but
-                # best way to compare. Re-encoding a  message to binary might
-                # not keep the field order
+                # 如果类型是消息，我们希望将原始类型转换为消息
+                # 这并不理想，我们将使用非预期的类型，但
+                # 这是比较的最佳方式。将消息重新编码为二进制可能
+                # 不会保持字段顺序
                 new_field_typedef = new_typedef[field_number]["message_typedef"]
                 for i, orig_value in enumerate(orig_values):
                     if orig_type == "bytes":
@@ -152,7 +151,7 @@ def test_anon_json_decode(x):
                         )
                         orig_field_typedef = orig_field_typedef.to_dict()
                     else:
-                        # string value
+                        # 字符串值
                         (
                             orig_values[i],
                             orig_field_typedef,
@@ -168,14 +167,14 @@ def test_anon_json_decode(x):
                 orig_type = "message"
 
             if new_type == "string" and orig_type == "bytes":
-                # our bytes were accidently valid string
+                # 我们的字节被意外地解释成了有效字符串
                 new_type = "bytes"
                 for i, new_value in enumerate(new_values):
                     new_values[i], _ = length_delim.decode_bytes(
                         length_delim.encode_string(new_value), 0
                     )
-            note("New values: %r" % new_values)
-            # sort the lists with special handling for dicts
+            note("新值: %r" % new_values)
+            # 对列表进行排序，对字典特殊处理
             orig_values.sort(key=lambda x: x if not isinstance(x, dict) else x.items())
             new_values.sort(key=lambda x: x if not isinstance(x, dict) else x.items())
             for orig_value, new_value in zip(orig_values, new_values):

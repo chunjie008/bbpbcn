@@ -1,4 +1,4 @@
-"""Classes for encoding and decoding varint types"""
+"""用于编码和解码 varint 类型的类"""
 
 # Copyright (c) 2018-2024 NCC Group Plc
 #
@@ -29,9 +29,9 @@ from blackboxprotobuf.lib.exceptions import EncoderException, DecoderException
 if six.PY3:
     from typing import Any, Tuple
 
-# These are set in decoder.py
-# In theory, uvarints and zigzag varints shouldn't have a max
-# But this is enforced by protobuf
+# 这些在 decoder.py 中设置
+# 理论上，uvarint 和 zigzag varint 不应该有最大值
+# 但 protobuf 强制了这些限制
 MAX_UVARINT = (1 << 64) - 1
 MIN_UVARINT = 0
 MAX_SVARINT = (1 << 63) - 1
@@ -40,7 +40,7 @@ MIN_SVARINT = -(1 << 63)
 
 def encode_uvarint(value):
     # type: (Any) -> bytes
-    """Encode a long or int into a bytearray."""
+    """将 long 或 int 编码为字节数组。"""
     if not isinstance(value, six.integer_types):
         raise EncoderException("Got non-int type for uvarint encoding: %s" % value)
     output = bytearray()
@@ -69,9 +69,8 @@ def encode_uvarint(value):
 
 def decode_uvarint(buf, pos):
     # type: (bytes, int) -> Tuple[int, int]
-    """Decode bytearray into a long."""
+    """将字节数组解码为 long。"""
     pos_start = pos
-    # Convert buffer to string
     if six.PY2:
         buf = bytes(buf)
 
@@ -89,7 +88,7 @@ def decode_uvarint(buf, pos):
             "Error decoding uvarint: read past the end of the buffer"
         )
 
-    # Validate that this is a cononical encoding by re-encoding the value
+    # 通过重新编码值来验证这是规范编码
     try:
         test_encode = encode_uvarint(value)
     except EncoderException as ex:
@@ -108,7 +107,7 @@ def decode_uvarint(buf, pos):
 
 def encode_varint(value):
     # type: (Any) -> bytes
-    """Encode a long or int into a bytearray."""
+    """将 long 或 int 编码为字节数组。"""
     if not isinstance(value, six.integer_types):
         raise EncoderException("Got non-int type for varint encoding: %s" % value)
     if value > MAX_SVARINT:
@@ -127,8 +126,7 @@ def encode_varint(value):
 
 def decode_varint(buf, pos):
     # type: (bytes, int) -> Tuple[int, int]
-    """Decode bytearray into a long."""
-    # Convert buffer to string
+    """将字节数组解码为 long。"""
     pos_start = pos
     if six.PY2:
         buf = bytes(buf)
@@ -137,7 +135,7 @@ def decode_varint(buf, pos):
     if value & (1 << 63):
         value -= 1 << 64
 
-    # Validate that this is a cononical encoding by re-encoding the value
+    # 通过重新编码值来验证这是规范编码
     try:
         test_encode = encode_varint(value)
     except EncoderException as ex:
@@ -164,17 +162,17 @@ def encode_zig_zag(value):
 def decode_zig_zag(value):
     # type: (int) -> int
     if value & 0x1:
-        # negative
+        # 负数
         return -((value + 1) >> 1)
     return value >> 1
 
 
 def encode_svarint(value):
     # type: (Any) -> bytes
-    """Zigzag encode the potentially signed value prior to encoding"""
+    """在编码之前对可能为有符号的值进行 zigzag 编码"""
     if not isinstance(value, six.integer_types):
         raise EncoderException("Got non-int type for svarint encoding: %s" % value)
-    # zigzag encode value
+    # zigzag 编码值
     if value > MAX_SVARINT:
         raise EncoderException(
             "Error encoding %d as svarint. Value must be <= %s" % (value, MAX_SVARINT)
@@ -188,13 +186,13 @@ def encode_svarint(value):
 
 def decode_svarint(buf, pos):
     # type: (bytes, int) -> Tuple[int, int]
-    """Decode bytearray into a long."""
+    """将字节数组解码为 long。"""
     pos_start = pos
 
     output, pos = decode_uvarint(buf, pos)
     value = decode_zig_zag(output)
 
-    # Validate that this is a cononical encoding by re-encoding the value
+    # 通过重新编码值来验证这是规范编码
     test_encode = encode_svarint(value)
     if buf[pos_start:pos] != test_encode:
         raise DecoderException(

@@ -27,7 +27,7 @@ import struct
 class TestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         payload_type = self.headers.get("payload_encoding", "none")
-        print(f"Got connection with payload encoding: {payload_type}")
+        print(f"收到连接，payload 编码: {payload_type}")
         data = self.rfile.read1()
         if payload_type == "gzip":
             data = zlib.decompress(data, wbits=31)
@@ -38,17 +38,17 @@ class TestHandler(BaseHTTPRequestHandler):
             length = struct.unpack_from(">I", data[1:])[0]
             data = old_data[5:]
             assert length == len(data)
-        print("Got data: %s" % data)
+        print("收到数据: %s" % data)
         message = Test_pb2.TestMessage()
         message.ParseFromString(data)
-        print("Got message: %s" % data)
+        print("收到消息: %s" % data)
 
         output = message.SerializeToString()
 
         if payload_type == "gzip":
             output = zlib.compress(output, level=9, wbits=31)
         elif payload_type == "grpc":
-            # Fake grpc wrapper
+            # 伪 grpc 包装
             length = len(output)
             old_output = output
             output = bytearray()

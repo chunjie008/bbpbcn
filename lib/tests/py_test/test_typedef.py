@@ -31,7 +31,7 @@ from blackboxprotobuf.lib.types import type_maps
 from blackboxprotobuf.lib.typedef import TypeDef
 
 
-# Test for bug when alt typedef string is unicode/string
+# 测试当替代 typedef 字符串为 unicode/string 时的 bug
 def test_alt_typedef_unicode():
     config = Config()
 
@@ -44,7 +44,7 @@ def test_alt_typedef_unicode():
     data = length_delim.encode_message(message, config, TypeDef.from_dict(typedef))
     length_delim.decode_message(data, config, TypeDef.from_dict(typedef))
 
-    # try unicode too
+    # 也测试 unicode
     typedef = {
         "1": {"type": "message", "message_typedef": {}, "alt_typedefs": {"1": "string"}}
     }
@@ -53,7 +53,7 @@ def test_alt_typedef_unicode():
 
 
 def test_alt_field_id_unicode():
-    # Check for bug when field id is a str and not unicode in python2
+    # 检查 Python2 中字段 ID 为 str 而非 unicode 时的 bug
     config = Config()
 
     typedef = {
@@ -65,7 +65,7 @@ def test_alt_field_id_unicode():
     data = length_delim.encode_message(message, config, TypeDef.from_dict(typedef))
     length_delim.decode_message(data, config, TypeDef.from_dict(typedef))
 
-    # try unicode
+    # 测试 unicode
     message = {"1-1": "test"}
 
     data = length_delim.encode_message(message, config, TypeDef.from_dict(typedef))

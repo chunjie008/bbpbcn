@@ -1,5 +1,5 @@
-"""Adds the top level type definition editor and registers the protobuf message
-editor factory for individual tabs
+"""添加顶层类型定义编辑器并注册各个选项卡的 protobuf 消息
+编辑器工厂
 """
 
 # Copyright (c) 2018-2023 NCC Group Plc
@@ -32,7 +32,7 @@ from javax.swing import DefaultListModel
 from java.util.concurrent import Executors
 
 
-# Add correct directory to sys.path
+# 将正确的目录添加到 sys.path
 _BASE_DIR = os.path.abspath(
     os.path.dirname(inspect.getfile(inspect.currentframe())) + "../../../../"
 )
@@ -47,7 +47,7 @@ EXTENSION_NAME = "BlackboxProtobuf"
 
 
 class BurpExtender(burp.IBurpExtender, burp.IExtensionStateListener):
-    """Primary extension class. Sets up all other functionality."""
+    """主要的扩展类。设置所有其他功能。"""
 
     def __init__(self):
         self.open_windows = []
@@ -55,9 +55,9 @@ class BurpExtender(burp.IBurpExtender, burp.IExtensionStateListener):
         self.helpers = None
         self.saved_types = {}
         self.suite_tab = None
-        # global list of known messages for all views
-        # this should mirror what is in blackboxprotobuf.known_messages
-        # TODO bundle them together so it doesn't have to be manually updated
+        # 所有视图的已知消息全局列表
+        # 这应与 blackboxprotobuf.known_messages 中的内容保持一致
+        # TODO 将它们捆绑在一起，这样就不需要手动更新了
         self.known_message_model = DefaultListModel()
         self.refresh_message_model()
 
@@ -69,7 +69,7 @@ class BurpExtender(burp.IBurpExtender, burp.IExtensionStateListener):
             self.known_message_model.addElement(name)
 
     def registerExtenderCallbacks(self, callbacks):
-        """Called by burp. Collects callback object and sets up UI"""
+        """由 Burp 调用。收集回调对象并设置 UI"""
         try:
             callbacks.registerExtensionStateListener(self)
 
@@ -100,8 +100,8 @@ class BurpExtender(burp.IBurpExtender, burp.IExtensionStateListener):
             self.saved_types.update(json.loads(saved_types))
 
     def saveKnownMessages(self):
-        # TODO might be good to cll this more often (eg. when messages are updated)
-        # save the known messages
+        # TODO 也许更频繁地调用这个会更好（例如，当消息更新时）
+        # 保存已知的消息
         self.callbacks.saveExtensionSetting(
             "known_types", json.dumps(default_config.known_types)
         )

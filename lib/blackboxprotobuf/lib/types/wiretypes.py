@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Define the wiretype int values
+# 定义线缆类型（wiretype）的整数值
 VARINT = 0
 FIXED64 = 1
 LENGTH_DELIMITED = 2

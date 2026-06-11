@@ -27,7 +27,7 @@ import logging
 try:
     import blackboxprotobuf
 except ModuleNotFoundError:
-    # two abspath because dirname gives an empty string if we run just bbpb.py
+    # 两个 abspath 是因为 dirname 如果只运行 bbpb.py 会返回空字符串
     _BASE_DIR = os.path.abspath(
         os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
         + "/.."
@@ -73,7 +73,7 @@ class BlackboxProtobufAddon:
             "bbpb_project_file",
             typespec=str,
             default="",
-            help="Persist known_types and typedef mappings to a project file. File will be written to automatically, so consider keeping a semi-regular backup",
+            help="将 known_types 和 typedef 映射持久化到项目文件。文件会自动写入，因此建议定期备份",
         )
 
     def _load_project_file(self, project_file: str | None = None):
@@ -88,16 +88,16 @@ class BlackboxProtobufAddon:
         if not self.project_file:
             return
 
-        logging.info("Loading project data from file")
+        logging.info("正在从文件加载项目数据")
         try:
             with open(project_file, "r") as f:
                 project_data = json.load(f)
 
-            # We update the existing typedef_lookup and bbpb_confg in case we have existing data
+            # 以防我们有现有数据，更新已有的 typedef_lookup 和 bbpb_config
             self.typedef_lookup.update(project_data["typedef_lookup"])
             self.bbpb_config.known_types.update(project_data["known_types"])
         except FileNotFoundError:
-            # We haven't written anything, so the file might not exist yet
+            # 我们还没有写入任何内容，所以文件可能还不存在
             pass
         self._refresh_view()
 
@@ -108,7 +108,7 @@ class BlackboxProtobufAddon:
         if not project_file:
             project_file = self.project_file
 
-        logging.info("Writing project data to file")
+        logging.info("正在将项目数据写入文件")
         data = {
             "typedef_lookup": self.typedef_lookup,
             "known_types": self.bbpb_config.known_types,
@@ -134,14 +134,14 @@ class BlackboxProtobufAddon:
         elif flow_part == "response-body":
             if not flow.response:
                 raise exceptions.CommandError(
-                    f"Flow part is response-body, but flow has no response"
+                    f"流程部分为 response-body，但流程没有响应"
                 )
             message = flow.response
         elif flow_part == "websocket":
-            # Edit the last websocket
+            # 编辑最后一个 websocket 消息
             message = flow.websocket.messages[-1]
         else:
-            raise exceptions.CommandError(f"Got unknown flow_part: {flow_part}")
+            raise exceptions.CommandError(f"未知的 flow_part: {flow_part}")
 
         message_hash = _message_hash(message.content, message, flow)
 
@@ -173,16 +173,16 @@ class BlackboxProtobufAddon:
             new_typedef = json.loads(typedef_json)
             blackboxprotobuf.validate_typedef(
                 new_typedef, typedef
-            )  # Validate against old typedef
+            )  # 根据旧 typedef 验证新 typedef
 
             blackboxprotobuf.lib.api._strip_typedef_annotations(new_typedef)
             known_type = self.typedef_lookup.get(message_hash)
             if isinstance(known_type, str):
-                # This is a named typedef, edit the known typedef instead of the saved value
+                # 这是一个命名 typedef，编辑已知的 typedef 而不是保存的值
                 self.bbpb_config.known_types[known_type] = new_typedef
                 self._save_project_file()
             else:
-                # Trusting validate_typedef and not going to try to use the typedef to decode again or reencode
+                # 信任 validate_typedef，不尝试再次使用 typedef 解码或重新编码
                 self.typedef_lookup[message_hash] = new_typedef
                 self._save_project_file()
 
@@ -196,44 +196,44 @@ class BlackboxProtobufAddon:
     def bbpb_apply_type(self, flow_part: str, typename: str) -> None:
         flow = ctx.master.view.focus.flow
         if typename not in self.bbpb_config.known_types and typename != "(clear)":
-            raise exceptions.CommandError(f"Type {typename} is not a know type")
+            raise exceptions.CommandError(f"类型 {typename} 不是已知类型")
         flow = ctx.master.view.focus.flow
         if not flow:
-            raise exceptions.CommandError("No flow selected.")
+            raise exceptions.CommandError("未选择流程。")
         if flow_part.startswith("request") or flow_part.startswith("response"):
             if flow_part == "request-body":
                 message = flow.request
             elif flow_part == "response-body":
                 if not flow.response:
                     raise exceptions.CommandError(
-                        f"Flow part is response-body, but flow has no response"
+                        f"流程部分为 response-body，但流程没有响应"
                     )
                 message = flow.response
             message_hash = _message_hash(message.content, message, flow)
             if typename == "(clear)":
-                logging.info("popping message hash")
+                logging.info("弹出消息 hash")
                 self.typedef_lookup.pop(message_hash, None)
                 self._save_project_file()
                 self._refresh_view()
                 return
 
-            # Validate that we can decode the message with our new type
+            # 验证我们是否可以使用新类型解码该消息
             try:
                 _decode_protobuf(
                     message.content, typename, self.bbpb_config, fallback=False
                 )
             except BlackboxProtobufException as ex:
                 raise exceptions.CommandError(
-                    f"Error applying type name {typename} to part {flow_part}: {ex}"
+                    f"将类型名称 {typename} 应用于部分 {flow_part} 时出错: {ex}"
                 )
 
         elif flow_part.startswith("websocket"):
-            # Websockets don't have a single typedef to edit
-            # Instead, we are going to build a typedef based on all the messages
+            # WebSocket 没有单一的 typedef 可编辑
+            # 相反，我们将基于所有消息构建一个 typedef
             if flow_part == "websocket-request":
                 if not flow.websocket:
                     raise exceptions.CommandError(
-                        f"Flow part is websocket-request, but flow is not a websocket"
+                        f"流程部分为 websocket-request，但流程不是 websocket"
                     )
                 messages = [
                     message
@@ -243,7 +243,7 @@ class BlackboxProtobufAddon:
             elif flow_part == "websocket-response":
                 if not flow.websocket:
                     raise exceptions.CommandError(
-                        f"Flow part is websocket-response, but flow is not a websocket"
+                        f"流程部分为 websocket-response，但流程不是 websocket"
                     )
                 messages = [
                     message
@@ -252,16 +252,16 @@ class BlackboxProtobufAddon:
                 ]
             if not messages:
                 raise exceptions.CommandError(
-                    f"Could not find any messages for flow part: {flow_part}"
+                    f"未找到流程部分 {flow_part} 的任何消息"
                 )
             message_hash = _message_hash(messages[0].content, messages[0], flow)
             if typename == "(clear)":
-                logging.info("popping message hash")
+                logging.info("弹出消息 hash")
                 self.typedef_lookup.pop(message_hash, None)
                 self._save_project_file()
                 self._refresh_view()
                 return
-            # Validate that we can decode all messages with our type
+            # 验证我们是否可以使用该类型解码所有消息
             for message in messages:
                 try:
                     _decode_protobuf(
@@ -269,9 +269,9 @@ class BlackboxProtobufAddon:
                     )
                 except BlackboxProtobufException as ex:
                     raise exceptions.CommandError(
-                        f"Error applying type name {typename} to part {flow_part}: {ex}"
+                        f"将类型名称 {typename} 应用于部分 {flow_part} 时出错: {ex}"
                     )
-        # Success
+        # 成功
         self.typedef_lookup[message_hash] = typename
         self._save_project_file()
         self._refresh_view()
@@ -281,7 +281,7 @@ class BlackboxProtobufAddon:
     @command.argument("typename", type=str)
     def bbpb_new_type(self, flow_part: str, typename: str) -> None:
         if typename == "(clear)":
-            raise exceptions.CommandError(f"Error: Typename {typename} is not valid.")
+            raise exceptions.CommandError(f"错误：类型名称 {typename} 无效。")
         typedef, message_hash = self._resolve_type(flow_part)
 
         blackboxprotobuf.lib.api._strip_typedef_annotations(typedef)
@@ -294,14 +294,14 @@ class BlackboxProtobufAddon:
     def _resolve_type(self, flow_part):
         flow = ctx.master.view.focus.flow
         if not flow:
-            raise exceptions.CommandError("No flow selected.")
+            raise exceptions.CommandError("未选择流程。")
         if flow_part.startswith("request") or flow_part.startswith("response"):
             if flow_part == "request-body":
                 message = flow.request
             elif flow_part == "response-body":
                 if not flow.response:
                     raise exceptions.CommandError(
-                        f"Flow part is response-body, but flow has no response"
+                        f"流程部分为 response-body，但流程没有响应"
                     )
                 message = flow.response
             message_hash = _message_hash(message.content, message, flow)
@@ -310,12 +310,12 @@ class BlackboxProtobufAddon:
                 message.content, saved_typedef, self.bbpb_config
             )
         elif flow_part.startswith("websocket"):
-            # Websockets don't have a single typedef to edit
-            # Instead, we are going to build a typedef based on all the messages
+            # WebSocket 没有单一的 typedef 可编辑
+            # 相反，我们将基于所有消息构建一个 typedef
             if flow_part == "websocket-request":
                 if not flow.websocket:
                     raise exceptions.CommandError(
-                        f"Flow part is websocket-request, but flow is not a websocket"
+                        f"流程部分为 websocket-request，但流程不是 websocket"
                     )
                 messages = [
                     message
@@ -325,7 +325,7 @@ class BlackboxProtobufAddon:
             elif flow_part == "websocket-response":
                 if not flow.websocket:
                     raise exceptions.CommandError(
-                        f"Flow part is websocket-response, but flow is not a websocket"
+                        f"流程部分为 websocket-response，但流程不是 websocket"
                     )
                 messages = [
                     message
@@ -334,7 +334,7 @@ class BlackboxProtobufAddon:
                 ]
             if not messages:
                 raise exceptions.CommandError(
-                    f"Could not find any messages for flow part: {flow_part}"
+                    f"未找到流程部分 {flow_part} 的任何消息"
                 )
             message_hash = _message_hash(messages[0].content, messages[0], flow)
             saved_typedef = self.typedef_lookup.get(message_hash)
@@ -355,7 +355,7 @@ class BlackboxProtobufAddon:
                     )
                     message_jsons.append(message_json)
         else:
-            raise exceptions.CommandError(f"Got unknown flow_part: {flow_part}")
+            raise exceptions.CommandError(f"未知的 flow_part: {flow_part}")
 
         return typedef, message_hash
 
@@ -363,7 +363,7 @@ class BlackboxProtobufAddon:
     @command.argument("typename", type=types.Choice("bbpb.options.known_types"))
     def bbpb_del_type(self, typename: str) -> None:
         if typename not in self.bbpb_config.known_types:
-            raise exceptions.CommandError(f"Error: Type {typename} is not known")
+            raise exceptions.CommandError(f"错误：类型 {typename} 未知")
         self.bbpb_config.known_types.pop(typename, None)
         keys_to_remove = [
             key for key, value in self.typedef_lookup.items() if value == typename
@@ -377,9 +377,9 @@ class BlackboxProtobufAddon:
     def bbpb_options_edit_part(self) -> Sequence[str]:
         flow = ctx.master.view.focus.flow
         if not flow:
-            raise exceptions.CommandError("No flow selected.")
+            raise exceptions.CommandError("未选择流程。")
 
-        # Prompts the user for the section to edit
+        # 提示用户选择要编辑的部分
         if flow.websocket:
             if len(flow.websocket.messages) > 0:
                 return ["websocket"]
@@ -415,12 +415,12 @@ class BlackboxProtobufAddon:
 
     @command.command("bbpb.project.load")
     def bbpb_project_load(self, project_file: str) -> None:
-        # TODO would be good to have errors propagated here
+        # TODO 若有错误能传播到这里就好了
         self._load_project_file(project_file)
 
     @command.command("bbpb.project.save")
     def bbpb_project_save(self, project_file: str) -> None:
-        # TODO would be good to have errors propagated here
+        # TODO 若有错误能传播到这里就好了
         self._save_project_file(project_file)
 
 
@@ -439,14 +439,14 @@ class BlackboxProtobufView(contentviews.View):
         http_message: http.Message | None = None,
         **unknown_metadata,
     ) -> contentviews.TViewResult:
-        # No support for TCP or UDP flows
+        # 不支持 TCP 或 UDP 流程
         if not isinstance(flow, http.HTTPFlow):
             return None
 
         if len(data) == 0:
             return
 
-        # message_hash is for looking up the appropiate typedef for this request, based on URL and type of message
+        # message_hash 用于根据 URL 和消息类型查找此请求的适当 typedef
         message_hash = _message_hash(data, http_message, flow)
 
         typedef = self.addon.typedef_lookup.get(message_hash)
@@ -457,9 +457,9 @@ class BlackboxProtobufView(contentviews.View):
 
         title = "Protobuf"
         if isinstance(typedef, str):
-            title += f"  |  Type: {typedef}"
+            title += f"  |  类型: {typedef}"
         else:
-            title += f"  |  Type: anonymous"
+            title += f"  |  类型: 匿名"
 
         return title, contentviews.format_text(message)
 
@@ -477,14 +477,14 @@ class BlackboxProtobufView(contentviews.View):
                 return 2
             else:
                 return 0
-        # We don't know if we can decode protobuf or not, so let's elect
-        # ourselves for all websockets
+        # 我们不知道是否能解码 protobuf，所以选择
+        # 适用于所有 websocket
         if flow.websocket:
             return 1
         return 0
 
 
-# This could be improved by taking is_request from the client for some cases
+# 对于某些情况，可以通过是否来自客户端来判断 is_request，但这可以改进
 def _message_hash(
     data: bytes,
     message: http.Message | websocket.WebSocketMessage | None,
@@ -496,29 +496,27 @@ def _message_hash(
         return f"response|{flow.request.url}"
     elif flow.websocket:
         if message is None or not isinstance(message, websocket.WebSocketMessage):
-            # TODO this is really hacky and might be wasted cycles if there are
-            # a lot of messages
-            # Mitmproxy won't give us the WebSocketMessage message type for
-            # content views, so we can't tell which direction it's going from
-            # just the message.
+            # TODO 这非常 hacky，如果有大量消息可能会浪费计算资源
+            # Mitmproxy 不会为内容视图提供 WebSocketMessage 消息类型，
+            # 所以我们无法仅从消息判断其方向。
             try:
                 message = next(
                     (m for m in flow.websocket.messages if m.content == data)
                 )
             except StopIteration:
                 logging.warn(
-                    "Message hashing couldn't find matching message in flow.websocket.messages"
+                    "消息哈希在 flow.websocket.messages 中找不到匹配的消息"
                 )
                 message = None
 
-        # Default to request if we never figured out the message
+        # 如果我们始终无法确定消息，默认为请求
         if message and not message.from_client:
             return f"websocket-response|{flow.request.url}"
         else:
             return f"websocket-request|{flow.request.url}"
     else:
         logging.warn(
-            f"BBPB content view got a view that was not websocket, request or response: {type(http_message)}"
+            f"BBPB 内容视图收到了既不是 websocket、请求也不是响应的视图: {type(http_message)}"
         )
         return None
 
@@ -548,23 +546,22 @@ def _decode_protobuf(data, typedef, config, fallback=True):
         else:
             raise exc
     raise BlackboxProtobufException(
-        'Failed to decode protobuf, but did not catch "none" decoder. This should never be hit'
+        '解码 protobuf 失败，但未捕获 "none" 解码器。这种情况不应发生'
     )
 
 
-# This function spawns an editor for a text file. Once the file is saved, it
-# calls `callback` with the text saved by the user. If `callback` throws an
-# exception, this function will present the error to the user and allow the
-# user to either keep editing the payload, reset the payload to the original
-# text and edit again, or give up and exit with no changes
+# 此函数为一个文本文件派生编辑器。文件保存后，
+# 会调用 `callback` 并传入用户保存的文本。如果 `callback` 抛出
+# 异常，此函数会向用户显示错误，并允许
+# 用户选择：继续编辑 payload、将 payload 重置为原始
+# 文本并重新编辑，或者放弃并不做任何更改退出。
 #
-# The UI requires that all the logic on the modified text is embedded in a
-# callback, I couldn't find any way to get a user choice without a callback
+# UI 要求所有修改文本的逻辑都嵌入在
+# 回调中，我找不到不需要回调就能获取用户选择的方法。
 #
-# This function is slightly cursed in that we have to use a custom chooser
-# class to allow recursive chooser calls, otherwise it only allows a single
-# prompt per command. Hopefully I can find a better way to handle this down the
-# road.
+# 此函数有点复杂，因为我们不得不使用自定义的 chooser
+# 类来允许递归的 chooser 调用，否则每个命令只允许一个
+# 提示。希望以后能找到更好的处理方式。
 T = TypeVar("T")
 
 
@@ -579,29 +576,29 @@ def _spawn_validating_editor(
         callback(user_text)
         signals.pop_view_state.send()
     except Exception as exc:
-        options = ["Continue Editing", "Reset Payload And Edit", "Exit"]
+        options = ["继续编辑", "重置 payload 并编辑", "退出"]
 
         def choose_callback(action: str):
-            if action == "Continue Editing":
-                # Keep editing the text that failed
+            if action == "继续编辑":
+                # 继续编辑失败的文本
                 _spawn_validating_editor(user_text, callback, original_text)
-            elif action == "Reset Payload And Edit":
-                # Edit the original text instead
+            elif action == "重置 payload 并编辑":
+                # 改为编辑原始文本
                 _spawn_validating_editor(original_text, callback)
-            elif action == "Exit":
-                # Just return
+            elif action == "退出":
+                # 直接返回
                 signals.pop_view_state.send()
                 return
             else:
                 raise Exception(
-                    f"Got unknown option in validating editor menu: {action}"
+                    f"验证编辑菜单中收到未知选项: {action}"
                 )
 
         signals.pop_view_state.send()
         ctx.master.overlay(
             RecursiveChooser(
                 ctx.master,
-                f"Error validating payload: {exc}",
+                f"验证 payload 时出错: {exc}",
                 options,
                 "",
                 choose_callback,
@@ -609,14 +606,14 @@ def _spawn_validating_editor(
         )
 
 
-# Below is the exact keypress implementation from `overlay.Chooser`, but
-# without `signals.pop_view_state.send()` after the callbacks This allows us to
-# spawn overlays (such as another chooser) from the callback function.
-# With `overlay.Chooser`, it calls `signals.pop_view_state.send()` *after* the
-# callback, which pops off the new chooser set by the callback
+# 以下是 `overlay.Chooser` 的精确按键实现，但是
+# 没有在回调之后调用 `signals.pop_view_state.send()`。这允许我们
+# 从回调函数中派生覆盖层（例如另一个 chooser）。
+# 使用 `overlay.Chooser`，它会在回调*之后*调用 `signals.pop_view_state.send()`，
+# 从而弹出由回调设置的新 chooser。
 #
-# This shifts responsibility for calling `signals.pop_view_state.send()` to the
-# callback, which should call it on exit or before popping up a new chooser
+# 因此，调用 `signals.pop_view_state.send()` 的责任转移到了
+# 回调函数，它应该在退出时或在弹出新的 chooser 之前调用。
 class RecursiveChooser(overlay.Chooser):
     def keypress(self, size, key):
         key = self.master.keymap.handle_only("chooser", key)
@@ -632,7 +629,7 @@ class RecursiveChooser(overlay.Chooser):
             return
 
         binding = self.master.keymap.get("global", key)
-        # This is extremely awkward. We need a better way to match nav keys only.
+        # 这非常尴尬。我们需要更好的方法来仅匹配导航键。
         if binding and binding.command.startswith("console.nav"):
             self.master.keymap.handle("global", key)
         elif key in keymap.navkeys:

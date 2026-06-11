@@ -1,6 +1,4 @@
-""" Python methods for importing and exporting '.proto' files from the BBP type
-definition format.
-"""
+"""用于从 BBP 类型定义格式导入和导出 '.proto' 文件的 Python 方法。"""
 
 # Copyright (c) 2018-2024 NCC Group Plc
 #
@@ -68,7 +66,7 @@ PACKABLE_TYPES = [
     "double",
 ]
 
-# Inverse of the above, but we have to include more types
+# 上面的逆映射，但必须包含更多类型
 PROTO_FILE_TYPE_TO_BBP = {
     "double": "double",
     "float": "float",
@@ -84,13 +82,13 @@ PROTO_FILE_TYPE_TO_BBP = {
     "sfixed64": "sfixed64",
     "bool": "uint",
     "string": "string",
-    # should be default_binary_type, but can't handle that well here
+    # 应该是 default_binary_type，但这里无法很好地处理
     "bytes": "bytes",
 }
 
 NAME_REGEX = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 
-# add packed types to the list
+# 将 packed 类型添加到列表中
 for packable_type in PACKABLE_TYPES:
     packed_type = "packed_" + packable_type
     PROTO_FILE_TYPE_MAP[packed_type] = PROTO_FILE_TYPE_MAP[packable_type]
@@ -102,7 +100,7 @@ def _print_message(message_name, typedef, output_file, depth=0):
     if not NAME_REGEX.match(message_name):
         raise TypedefException("Message name: %s is not valid" % message_name)
 
-    # sort typedef for better looking output
+    # 对 typedef 排序以获得更好的输出效果
     typedef = blackboxprotobuf.lib.api.sort_typedef(typedef)
 
     message_name = message_name.strip()
@@ -114,10 +112,10 @@ def _print_message(message_name, typedef, output_file, depth=0):
         field_name = None
         field_options = ""
 
-        # a repeated field with one element is indistinduishable from a
-        # repeated field so we just put repeated if we have proof that it is
-        # repeatable, but this might be wrong sometimes
-        # maybe some sort of protobuf discovery tool can detect this
+        # 只有一个元素的重复字段与单值字段无法区分，
+        # 所以如果我们有证据表明它是可重复的，就标记为 repeated，
+        # 但这有时可能是错误的
+        # 也许某种 protobuf 发现工具可以检测到这一点
         is_repeated = field_typedef.get("seen_repeated", False)
 
         if "name" in field_typedef and field_typedef["name"] != "":
@@ -129,8 +127,8 @@ def _print_message(message_name, typedef, output_file, depth=0):
             field_name = six.ensure_text("field%s" % field_number)
 
         if field_typedef["type"] == "message":
-            # If we have multiple typedefs, this means is something like the Any
-            # message, and has to be manually reparsed to each type
+            # 如果有多个 typedef，这意味着是类似 Any 消息的情况，
+            # 需要手动重新解析为每种类型
             if "alt_typedefs" in field_typedef:
                 proto_type = "bytes"
             else:
@@ -146,11 +144,11 @@ def _print_message(message_name, typedef, output_file, depth=0):
                 )
             proto_type = PROTO_FILE_TYPE_MAP[field_typedef["type"]]
 
-        # we're using proto3 syntax. Repeated numeric fields are packed by default
-        # if it's repeated and not packed, then make sure we specify it's not packed
+        # 使用 proto3 语法。重复的数值字段默认是 packed 的
+        # 如果是 repeated 且未 packed，则确保指定为非 packed
         if is_repeated and field_typedef["type"] in PACKABLE_TYPES:
             field_options = " [packed=false]"
-        # if it's a packed type, we'll explicitoly set that too, can't hurt
+        # 如果是 packed 类型，也显式设置，不会有坏处
         elif field_typedef["type"].startswith("packed_"):
             field_options = " [packed=true]"
             is_repeated = True
@@ -173,11 +171,10 @@ def _print_message(message_name, typedef, output_file, depth=0):
 
 def export_proto(typedef_map, output_filename=None, output_file=None, package=None):
     # type: (Dict[str, TypeDefDict], Optional[str], Optional[TextIO], Optional[str]) -> str | None
-    """Export the given type definitons as a '.proto' file. Typedefs are
-    expected as a dictionary of {'message_name': typedef }
+    """将给定的类型定义导出为 '.proto' 文件。typedef 期望为 {'message_name': typedef} 格式的字典。
 
-    Write to output_file or output_filename if provided, otherwise return a string
-    output_filename will be overwritten if it exists
+    如果提供了 output_file 或 output_filename，则写入其中，否则返回字符串。
+    如果 output_filename 已存在，将会被覆盖。
     """
     if output_filename is not None:
         output_file = io.open(output_filename, "w+")
@@ -185,7 +182,7 @@ def export_proto(typedef_map, output_filename=None, output_file=None, package=No
     if output_file is None:
         output_file = io.StringIO()
 
-    # preamble
+    # 前导部分
     output_file.write(six.u('syntax = "proto3";\n\n'))
     if package:
         output_file.write(six.u("package %s;\n\n") % package)
@@ -195,7 +192,7 @@ def export_proto(typedef_map, output_filename=None, output_file=None, package=No
 
     if isinstance(output_file, io.StringIO):
         return output_file.getvalue()
-    # close the file if we opened it
+    # 如果打开的是文件，关闭它
     elif output_filename is not None:
         output_file.close()
     return None
@@ -287,11 +284,11 @@ def import_proto(config, input_string=None, input_filename=None, input_file=None
 
 def _parse_enum(enum_match, line, input_file):
     # type: (re.Match[str], str, TextIO) -> str
-    """Parse an enum out of the file. Goes from enum declaration to next }
-    Returns the enum's name
+    """从文件中解析枚举。从 enum 声明到下一个 } 为止。
+    返回枚举的名称
     """
     enum_name = enum_match.group(1)
-    # parse until the next '}'
+    # 一直解析到下一个 '}'
     while "}" not in line:
         line = input_file.readline()
         if not line:
@@ -301,9 +298,8 @@ def _parse_enum(enum_match, line, input_file):
 
 def _preparse_message(message_start_match, line, input_file):
     # type: (re.Match[str], str, TextIO) -> Dict[str, Any]
-    # TODO Should put together better types than Any, but we'll stick with this
-    # for now
-    """Parse out a message name and the lines that make it up"""
+    # TODO 应该整理出比 Any 更好的类型，但暂时先用这个
+    """解析出消息名称及其组成行"""
     message_name = message_start_match.group(1)
     message_lines = []
     inner_enums = []
@@ -328,7 +324,7 @@ def _preparse_message(message_start_match, line, input_file):
                     inner_message_start_match, line, input_file
                 )
                 inner_messages.append(message_tree)
-        # not an inner enum or message
+        # 不是内部枚举或消息
         else:
             message_lines.append(line)
 
@@ -358,19 +354,18 @@ def _collect_names(prefix, message_tree):
 
 def _check_message_name(current_path, name, known_message_names, config):
     # type: (str, str, List[str], Config) -> str | None
-    # Verify message name against preparsed message names and global
-    # known_messages
-    # For example, if we have:
+    # 对照预解析的消息名称和全局 known_messages 验证消息名称
+    # 例如，如果我们有：
     #   Message.InnerMesage
-    # referenced from:
+    # 从以下位置引用：
     #    PackageA.Message2
-    # we would look up:
+    # 我们会查找：
     # PackageA.Message2.Message.InnerMessage
     # PackageA.Message.InnerMessage
-    # should also work for enums
+    # 也应该适用于枚举
     if name in config.known_types:
         return name
-    # search for anything under a common prefix in known_message_names
+    # 在 known_message_names 中搜索公共前缀下的任何内容
     logger.debug("Testing message name: %s", name)
 
     prefix_options = [""]
@@ -383,7 +378,7 @@ def _check_message_name(current_path, name, known_message_names, config):
         logger.debug("Testing message name: %s", prefix + name)
         if prefix + name in known_message_names:
             return prefix + name
-        # remove the last bit of the prefix
+        # 移除前缀的最后一部分
         if "." not in prefix:
             break
         prefix = ".".join(prefix.split(".")[:-1])
@@ -403,11 +398,11 @@ def _parse_message(
     message_typedef = {}
     message_name = prefix + message_tree["name"]
     prefix = message_name + "."
-    # parse the actual message fields
+    # 解析实际的消息字段
     for line in message_tree["data"]:
-        # lines should already be stripped and should not have messages or enums
+        # 行应该已经被 strip，并且不应包含消息或枚举
         assert all([not line.strip().startswith(x) for x in ["message ", "enum "]])
-        # Check if the line matches the field regex
+        # 检查该行是否匹配字段正则表达式
         match = FIELD_REGEX.match(line)
         if match:
             field_number, field_typedef = _parse_field(
@@ -415,7 +410,7 @@ def _parse_message(
             )
             message_typedef[field_number] = field_typedef
 
-    # add the messsage to tyep returned typedefs
+    # 将消息添加到返回的 typedef 映射中
     logger.debug("Adding message %s to typedef maps", message_name)
     typdef_map[message_name] = message_typedef
 
@@ -431,7 +426,7 @@ def _parse_message(
         )
 
 
-# parse a field into a dictionary for the typedef
+# 将字段解析为 typedef 的字典
 def _parse_field(match, known_message_names, enum_names, prefix, is_proto3, config):
     # type: (re.Match[str], List[str], List[str], str, bool, Config) -> Tuple[str, FieldDefDict]
     typedef = {}  # type: FieldDefDict
@@ -444,7 +439,7 @@ def _parse_field(match, known_message_names, enum_names, prefix, is_proto3, conf
     if not field_number:
         raise ProtofileException("Could not parse field number from line: %s" % match)
 
-    # figure out repeated
+    # 确定是否为 repeated
     field_rule = match.group(1)
     is_repeated = False
     if field_rule and "repeated" in field_rule:
@@ -454,16 +449,16 @@ def _parse_field(match, known_message_names, enum_names, prefix, is_proto3, conf
     field_type = match.group(2)
     if not field_type:
         raise ProtofileException("Could not parse field type from line: %s" % match)
-    # check normal types
+    # 检查常规类型
     bbp_type = PROTO_FILE_TYPE_TO_BBP.get(field_type, None)
     if not bbp_type:
         logger.debug("Got non-basic type: %s, checking enums", field_type)
-        # check enum names
+        # 检查枚举名称
         if _check_message_name(prefix, field_type, enum_names, config):
             # enum = uint
             bbp_type = "uint"
     if not bbp_type:
-        # Not enum or normal type, check messages
+        # 不是枚举或常规类型，检查消息
         message_name = _check_message_name(
             prefix, field_type, known_message_names, config
         )
@@ -472,13 +467,13 @@ def _parse_field(match, known_message_names, enum_names, prefix, is_proto3, conf
             typedef["message_type_name"] = message_name
 
     if not bbp_type:
-        # If we don't have a type now, then fail
+        # 如果仍然没有类型，则失败
         raise ProtofileException(
             "Could not get a type for field %s: %s" % (field_name, field_type)
         )
 
-    # figure out packed
-    # default based on repeated + proto3, fallback to options
+    # 确定 packed
+    # 默认基于 repeated + proto3，回退到选项
     field_options = match.group(5)
     is_packed = is_repeated and is_proto3 and (bbp_type in PACKABLE_TYPES)
     if is_packed and field_options and "packed=false" in field_options:
@@ -486,7 +481,7 @@ def _parse_field(match, known_message_names, enum_names, prefix, is_proto3, conf
     elif is_repeated and field_options and "packed=true" in field_options:
         is_packed = True
 
-    # make sure the type lines up with packable
+    # 确保类型与 packable 一致
     if is_packed and bbp_type not in PACKABLE_TYPES:
         raise ProtofileException(
             "Field %s set as packable, but not a packable type: %s"

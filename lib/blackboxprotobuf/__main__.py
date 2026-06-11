@@ -41,13 +41,13 @@ def _build_parser():
     subparsers = parser.add_subparsers(dest="command")
 
     convert_parser = subparsers.add_parser(
-        "convert", help="Convert hex string to various types (int, float, string, etc.)"
+        "convert", help="将十六进制字符串转换为各种类型（整数、浮点数、字符串等）"
     )
     convert_parser.add_argument(
         "hex_str",
         nargs="?",
-        help="Hex string to convert (reads from stdin if not provided). "
-        "Supports formats: 01020304, 01 02 03 04, 01-02-03-04, 0x01020304",
+        help="要转换的十六进制字符串（如果未提供，则从标准输入读取）。"
+        "支持的格式：01020304, 01 02 03 04, 01-02-03-04, 0x01020304",
     )
     convert_parser.add_argument(
         "-t",
@@ -55,80 +55,80 @@ def _build_parser():
         required=True,
         dest="convert_type",
         choices=sorted(hexconvert.TYPE_MAP.keys()) + ["string", "hex_raw", "bits"],
-        help="Target type for conversion",
+        help="转换的目标类型",
     )
     convert_parser.add_argument(
         "-j",
         "--json",
         action="store_true",
         dest="convert_json",
-        help="Output results as JSON",
+        help="以 JSON 格式输出结果",
     )
 
     analyze_parser = subparsers.add_parser(
-        "analyze", help="Analyze hex packets and detect structure (len, msgid, uid, protobuf)"
+        "analyze", help="分析十六进制数据包并检测结构（长度、消息ID、唯一ID、protobuf）"
     )
     analyze_parser.add_argument(
         "packets",
         nargs="*",
-        help="Hex packet strings (reads from stdin if not provided). "
-        "Supports formats: 01020304, 01 02 03 04, 01-02-03-04, 0x01020304",
+        help="十六进制数据包字符串（如果未提供，则从标准输入读取）。"
+        "支持的格式：01020304, 01 02 03 04, 01-02-03-04, 0x01020304",
     )
     analyze_parser.add_argument(
         "-e",
         "--endian",
         choices=["le", "be"],
         default="le",
-        help="Byte order (default: le)",
+        help="字节序（默认为 le）",
     )
     analyze_parser.add_argument(
         "-j",
         "--json",
         action="store_true",
         dest="analyze_json",
-        help="Output results as JSON",
+        help="以 JSON 格式输出结果",
     )
 
     parser.add_argument(
         "-e",
         "--encode",
         action="store_true",
-        help="Switch to encode mode. Command decodes by default",
+        help="切换到编码模式。默认情况下命令执行解码操作",
     )
     parser.add_argument(
         "-j",
         "--json-protobuf",
         action="store_true",
-        help='Use JSON objects which may contain base64\'d protobuf and typedefs instead of just raw protobuf bytes for encoding input and decoding output. The JSON may have the following keys: "message", "typedef", "payload_encoding".',
+        help='使用可能包含 base64 编码的 protobuf 和typedef 的 JSON 对象，而不是仅包含原始 protobuf 字节作为编码输入和解码输出。JSON 可能包含以下键："message", "typedef", "payload_encoding"。',
     )
     parser.add_argument(
         "--compact",
         action="store_true",
-        help="Use compact/non-pretty JSON output",
+        help="使用紧凑/非美化 JSON 输出",
     )
     parser.add_argument(
         "-pe",
         "--payload-encoding",
         action="store",
-        help="Override the wrapper encoding for the payload, such as gzip or grpc",
+        help="覆盖 payload 的包装编码，例如 gzip 或 grpc",
     )
     parser.add_argument(
         "-it",
         "--input-type",
         action="store",
-        help="File to read the typedef from instead of stdin",
+        help="从文件读取 typedef 而不是从标准输入",
     )
     parser.add_argument(
         "-ot",
         "--output-type",
         action="store",
-        help='(Decoding) File to write the typedef to instead of stdout. This file may be a plain JSON typedef or a json object with "typedef" and "payload_encoding" fields.',
+        help='（解码）将 typedef 写入文件而不是标准输出。此文件可以是普通 JSON typedef 或包含 "typedef" 和 "payload_encoding" 字段的 JSON 对象。',
     )
     parser.add_argument(
         "-r",
         "--raw-decode",
         action="store_true",
-        help="(Decoding) Output just the decoded JSON and no type information.",
+        help="（解码）仅输出解码后的 JSON，不输出类型信息。",
     )
     return parser
 
@@ -144,7 +144,7 @@ def main():
     if args.command == "analyze":
         return _analyze(args)
 
-    # Original protobuf decode/encode logic
+    # 原始的 protobuf 解码/编码逻辑
 
     message = None  # type:  str | bytes | Message | None
     typedef = None  # type: TypeDefDict | None
@@ -173,20 +173,20 @@ def main():
     if payload_encoding is None:
         payload_encoding = "none"
 
-    # Start basic, raw protobuf decoding
+    # 开始基本的原始 protobuf 解码
     if args.encode:
         if not isinstance(message, dict):
-            sys.stderr.write("Error did not get a valid message to encode")
+            sys.stderr.write("错误：未获取到有效的待编码消息")
             return 1
         if typedef is None:
-            sys.stderr.write("Encoding requires a valid type definition")
+            sys.stderr.write("编码需要一个有效的类型定义")
             return 1
         return _encode(args, message, typedef, payload_encoding)
     else:
         if isinstance(message, str):
             message = message.encode("utf-8")
         if not isinstance(message, bytes):
-            sys.stderr.write("Error did not get a valid message to decode")
+            sys.stderr.write("错误：未获取到有效的待解码消息")
             return 1
         return _decode(args, message, typedef, payload_encoding)
 
@@ -213,12 +213,12 @@ def _convert(args):
             else:
                 sys.stdout.write(str(result) + "\n")
         except (ValueError, binascii.Error) as e:
-            sys.stderr.write("Error: %s\n" % e)
+            sys.stderr.write("错误：%s\n" % e)
             return 1
     else:
         lines = sys.stdin.read().strip().splitlines()
         if not lines:
-            sys.stderr.write("Error: No hex input provided\n")
+            sys.stderr.write("错误：未提供十六进制输入\n")
             return 1
         output = hexconvert.convert_hex_lines(lines, args.convert_type, args.convert_json)
         sys.stdout.write(output + "\n")
@@ -236,7 +236,7 @@ def _analyze(args):
             if line.strip()
         ]
     if not hex_strings:
-        sys.stderr.write("Error: no hex packets provided\n")
+        sys.stderr.write("错误：未提供十六进制数据包\n")
         return 1
     try:
         result = packetanalyzer.analyze_packets(hex_strings, args.endian)
@@ -246,31 +246,31 @@ def _analyze(args):
             sys.stdout.write(packetanalyzer.format_text(result))
         return 0
     except (ValueError, binascii.Error) as e:
-        sys.stderr.write("Error: %s\n" % e)
+        sys.stderr.write("错误：%s\n" % e)
         return 1
 
 
-# Reads input from the location from args
-# Does not handle any JSON decoding
+# 从 args 指定的位置读取输入
+# 不处理任何 JSON 解码
 def _read_input(args):
     # type: (argparse.Namespace) -> str | bytes
     if args.encode or args.json_protobuf:
-        # Text
+        # 文本
         return sys.stdin.read()
     else:
-        # Binary
+        # 二进制
         return sys.stdin.buffer.read()
 
 
-# Writes output to the location from args
-# Does not handle any JSON encoding
+# 将输出写入 args 指定的位置
+# 不处理任何 JSON 编码
 def _write_output(args, data):
     # type: (argparse.Namespace, str | bytes) -> None
     if isinstance(data, str):
-        # Text
+        # 文本
         sys.stdout.write(data)
     else:
-        # Binary
+        # 二进制
         sys.stdout.buffer.write(data)
 
 
@@ -281,7 +281,7 @@ def _read_input_typedef_arg(args):
     if "typedef" in input_json:
         return input_json.get("typedef"), input_json.get("payload_encoding")
     else:
-        # Return whole paylaod as typedef, no encoding
+        # 将整个 payload 作为 typedef 返回，无编码
         return input_json, None
 
 
@@ -303,13 +303,13 @@ def _read_input_json_encoding(args, input_json, typedef, payload_encoding):
     # type: (argparse.Namespace, Message | Dict[str, str | Message | TypeDefDict], Optional[TypeDefDict], Optional[str]) -> Tuple[Message, Optional[TypeDefDict], Optional[str]]
     if typedef is None and "typedef" not in input_json:
         sys.stderr.write(
-            "Error: Did not get a typedef from --input-type or stdin. A typedef is required for encoding\n"
+            "错误：未从 --input-type 或标准输入获取 typedef。编码需要 typedef\n"
         )
         sys.exit(1)
 
     message = typing.cast(Message | None, input_json.get("message"))
     if message is None:
-        # Whole input is message. We already checked to make sure we have a typedef, so we can ditch it
+        # 整个输入就是消息。我们已经确保有 typedef，所以可以丢弃它
         return typing.cast(Message, input_json), typedef, None
 
     if typedef is None:
@@ -323,7 +323,7 @@ def _read_input_json_encoding(args, input_json, typedef, payload_encoding):
             payload_encoding = None
         else:
             sys.stderr.write(
-                "Warn: Payload encoding must be a string value: %r" % payload_encoding
+                "警告：Payload 编码必须是字符串值：%r" % payload_encoding
             )
             payload_encoding = None
 
@@ -332,10 +332,10 @@ def _read_input_json_encoding(args, input_json, typedef, payload_encoding):
 
 def _read_input_json_decoding(args, input_json, typedef, payload_encoding):
     # type: (argparse.Namespace, Dict[str, TypeDefDict | str], Optional[TypeDefDict], Optional[str]) -> Tuple[bytes, Optional[TypeDefDict], Optional[str]]
-    # Return message, typedef, payload_encoding
+    # 返回 message, typedef, payload_encoding
     message = typing.cast(str | None, input_json.get("protobuf_data"))
     if message is None:
-        sys.stderr.write('Error: Did not get a "protobuf_data" attribute in input JSON')
+        sys.stderr.write('错误：输入 JSON 中未包含 "protobuf_data" 属性')
         sys.exit(1)
 
     if typedef is None:
@@ -344,7 +344,7 @@ def _read_input_json_decoding(args, input_json, typedef, payload_encoding):
     if payload_encoding is None:
         payload_encoding = typing.cast(str | None, input_json.get("payload_encoding"))
 
-    # base64 decode if protobuf_json when decoding
+    # 当使用 protobuf_json 时进行 base64 解码
     protobuf_data = base64.b64decode(message)
 
     return protobuf_data, typedef, payload_encoding
@@ -353,13 +353,13 @@ def _read_input_json_decoding(args, input_json, typedef, payload_encoding):
 def _encode(args, message, typedef, payload_encoding):
     # type: (argparse.Namespace, Message, TypeDefDict, Optional[str]) -> int
     if typedef is None:
-        sys.stderr.write("Error: Cannot encode without a valid typedef")
+        sys.stderr.write("错误：没有有效的 typedef 无法编码")
         return 1
 
     if not payload_encoding:
         payload_encoding = "none"
 
-    # Re jsonify so that bbpb can fix bytes
+    # 重新 JSON 化以便 bbpb 可以处理字节
     message_json = json.dumps(message)
 
     protobuf_data = api.protobuf_from_json(message_json, typedef)
@@ -369,7 +369,7 @@ def _encode(args, message, typedef, payload_encoding):
     if args.json_protobuf:
         json_out = {
             "protobuf_data": base64.b64encode(data).decode("ascii"),
-            "typedef": typedef,  # Typedef is a bit redundant here
+            "typedef": typedef,  # 这里的 typedef 有点冗余
         }
         if payload_encoding != "none":
             json_out["payload_encoding"] = payload_encoding
@@ -383,26 +383,26 @@ def _encode(args, message, typedef, payload_encoding):
 def _decode(args, data, typedef, payload_encoding):
     # type: (argparse.Namespace, bytes, Optional[TypeDefDict], str) -> int
     if len(data) == 0:
-        sys.stderr.write("Error: Input data cannot be empty\n")
+        sys.stderr.write("错误：输入数据不能为空\n")
         return 1
 
-    # args.protobuf_json is already handled
+    # args.protobuf_json 已处理
 
     if payload_encoding:
-        # Use provided payload encoding algorithm
+        # 使用提供的 payload 编码算法
         protobuf_data, payload_encoding = payloads.decode_payload(
             data, payload_encoding
         )
         message_json, output_typedef = api.protobuf_to_json(protobuf_data, typedef)
     else:
-        # Have to guess the decoding algorithm
+        # 需要猜测解码算法
         decoders = payloads.find_decoders(data)
 
         for decode in decoders:
             try:
                 protobuf_data, encoding_alg = decode(data)
             except BlackboxProtobufException:
-                # The "none" algorithm should always succeed
+                # "none" 算法应该总是成功的
                 continue
 
             try:

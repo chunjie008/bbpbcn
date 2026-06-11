@@ -53,7 +53,7 @@ if six.PY3:
 )
 @settings(suppress_health_check=to_suppress)
 def test_proto_export(tmp_path, typedef, name):
-    """Check to make sure our generated protofiles don't throw an error"""
+    """检查我们生成的 proto 文件不会抛出错误"""
     with tempfile.NamedTemporaryFile(
         mode="w", dir=str(tmp_path), suffix=".proto", delete=True
     ) as outfile:
@@ -61,7 +61,7 @@ def test_proto_export(tmp_path, typedef, name):
 
         note(typedef_map)
 
-        # Trying exporting as string first
+        # 先尝试导出为字符串
         protofile.export_proto(typedef_map)
 
         protofile.export_proto(typedef_map, output_file=outfile)
@@ -84,8 +84,8 @@ def test_proto_export(tmp_path, typedef, name):
 )
 @settings(suppress_health_check=to_suppress)
 def test_proto_export_inverse(tmp_path, x, name):
-    """Generate a proto file and try to re-import it. This does not cover all
-    possible proto files we want to try importing"""
+    """生成一个 proto 文件并尝试重新导入。这并不涵盖
+    我们想要尝试导入的所有可能的 proto 文件"""
     config = Config()
     typedef, message = x
     name = six.ensure_text(name)
@@ -101,13 +101,13 @@ def test_proto_export_inverse(tmp_path, x, name):
         new_typedef_map = protofile.import_proto(config, input_file=outfile)
 
         config.known_types.update(new_typedef_map)
-        # validate
+        # 验证
         for name, typedef in new_typedef_map.items():
             blackboxprotobuf.validate_typedef(typedef, config=config)
 
         def _check_field_types(typedef1, typedef2):
             for field_num in typedef1.keys():
-                # make sure we don't drop keys
+                # 确保不会丢失键
                 assert field_num in typedef2
                 assert typedef1[field_num]["type"] == typedef2[field_num]["type"]
                 if typedef1[field_num]["type"] == "message":
@@ -138,7 +138,7 @@ def test_proto_export_inverse(tmp_path, x, name):
             _check_field_types(typedef, new_typedef_map[name])
 
         note(new_typedef_map[name])
-        # try to actually encode a message with the typedef
+        # 尝试使用 typedef 实际编码一条消息
         encode_forward = length_delim.encode_message(
             message, config, TypeDef.from_dict(typedef_map[name])
         )
@@ -156,33 +156,33 @@ def test_proto_export_inverse(tmp_path, x, name):
         )
 
 
-@pytest.mark.filterwarnings("ignore:Call to deprecated create function.*")
+@pytest.mark.filterwarnings("ignore:调用已弃用的 create 函数.*")
 def test_proto_import_examples():
     config = Config()
-    # try importing all the examples pulled from protobuf repo
+    # 尝试导入所有从 protobuf 仓库中提取的示例
     protofiles = glob.glob("tests/deps/protobuf/src/google/protobuf/*.proto")
-    # These files have some mechanism we don't support, mostly imports
+    # 以下文件包含我们不支持的某些机制，主要是导入
     unsupported_files = {
-        "tests/deps/protobuf/src/google/protobuf/api.proto",  # import
-        "tests/deps/protobuf/src/google/protobuf/unittest_optimize_for.proto",  # import
-        "tests/deps/protobuf/src/google/protobuf/type.proto",  # import
-        "tests/deps/protobuf/src/google/protobuf/unittest_lite_imports_nonlite.proto",  # import
-        "tests/deps/protobuf/src/google/protobuf/unittest_lite.proto",  # group type not supported
-        "tests/deps/protobuf/src/google/protobuf/unittest_embed_optimize_for.proto",  # import
+        "tests/deps/protobuf/src/google/protobuf/api.proto",  # 导入
+        "tests/deps/protobuf/src/google/protobuf/unittest_optimize_for.proto",  # 导入
+        "tests/deps/protobuf/src/google/protobuf/type.proto",  # 导入
+        "tests/deps/protobuf/src/google/protobuf/unittest_lite_imports_nonlite.proto",  # 导入
+        "tests/deps/protobuf/src/google/protobuf/unittest_lite.proto",  # 不支持 group 类型
+        "tests/deps/protobuf/src/google/protobuf/unittest_embed_optimize_for.proto",  # 导入
         "tests/deps/protobuf/src/google/protobuf/unittest.proto",  # group
-        "tests/deps/protobuf/src/google/protobuf/unittest_lazy_dependencies.proto",  # import
+        "tests/deps/protobuf/src/google/protobuf/unittest_lazy_dependencies.proto",  # 导入
     }
     assert len(protofiles) != 0
     for target_file in protofiles:
         if target_file in unsupported_files:
-            print("Skipping file: %s" % target_file)
+            print("跳过文件: %s" % target_file)
             continue
 
-        print("Testing file: %s" % target_file)
+        print("测试文件: %s" % target_file)
         typedef_map_out = protofile.import_proto(config, input_filename=target_file)
         config.known_types = typedef_map_out
         for name, typedef in typedef_map_out.items():
-            logging.debug("known messages: %s" % config.known_types)
+            logging.debug("已知消息: %s" % config.known_types)
             blackboxprotobuf.lib.validate_typedef(typedef, config=config)
 
 
@@ -191,11 +191,11 @@ def test_proto_import_examples():
     name=st.from_regex(protofile.NAME_REGEX),
 )
 @settings(suppress_health_check=to_suppress)
-@pytest.mark.filterwarnings("ignore:Call to deprecated create function.*")
+@pytest.mark.filterwarnings("ignore:调用已弃用的 create 函数.*")
 def test_proto_decode(tmp_path, x, name):
     config = Config()
     typedef, message = x
-    """ Export to protobuf and try to decoe a message we encodedd with it """
+    """导出为 protobuf 并尝试解码我们用其编码的消息"""
     with tempfile.NamedTemporaryFile(
         mode="w", dir=str(tmp_path), suffix=".proto", delete=True
     ) as outfile:
@@ -208,7 +208,7 @@ def test_proto_decode(tmp_path, x, name):
         note(typedef_map)
         basename = os.path.basename(outfile.name)
 
-        # Export the protobuf file and compile it
+        # 导出 protobuf 文件并编译
         protofile.export_proto(typedef_map, output_file=outfile, package=basename[:-6])
 
         py_out = str(tmp_path / "py_out")
@@ -222,14 +222,14 @@ def test_proto_decode(tmp_path, x, name):
             cwd=str(tmp_path),
         )
 
-        # Try to import the file
+        # 尝试导入文件
         sys.path.insert(0, str(tmp_path) + "/py_out/")
-        # Trim off .proto
+        # 去掉 .proto 后缀
         try:
             proto_module = __import__(basename[:-6] + "_pb2")
             del sys.path[0]
         except SyntaxError:
-            logging.debug("Caught syntax error in protoc import")
+            logging.debug("捕获到 protoc 导入的语法错误")
             return
 
         message_class = getattr(proto_module, name)
@@ -260,7 +260,7 @@ def test_proto_decode(tmp_path, x, name):
             elif isinstance(new_value, dict):
                 _check_message_match(orig_value, new_value)
             elif isinstance(orig_value, float):
-                # normalize floats
+                # 标准化浮点数
                 if isinstance(new_value, str):
                     if "Infinity" in new_value:
                         assert math.isinf(orig_value)
@@ -269,7 +269,7 @@ def test_proto_decode(tmp_path, x, name):
                         assert math.isnan(new_value)
 
                 else:
-                    # pack and unpack floats to try and normalize them
+                    # 打包和解包浮点数以尝试标准化
                     try:
                         orig_value_packed = struct.pack("<f", orig_value)
                         (orig_value,) = struct.unpack("<f", orig_value_packed)
@@ -300,5 +300,5 @@ def test_proto_decode(tmp_path, x, name):
                 else:
                     _check_field_match(orig_value, field_value)
 
-        # Check all the fields match each other
+        # 检查所有字段是否匹配
         _check_message_match(message, decoded_message)

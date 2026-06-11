@@ -1,20 +1,17 @@
-"""The `blackboxprotobuf.lib.api` module provides high level functions for
-decoding and re-encoding protobuf messages.
+"""`blackboxprotobuf.lib.api` 模块提供了用于解码和重新编码 protobuf 消息的高级函数。
 
-Most functions take the input data, a type definition and a config object.
+大多数函数接收输入数据、类型定义和配置对象。
 
-The 'message_type' or type definition (typedef) is a blackboxprotobuf specific format
-which defines which types should be used for decoding/encoding each field. It
-is optional for decoding functions but required for encoding funtions. The
-decoding function will return a typedef that is require to re-encode the array.
-If a typedef was provided during decoding, then those types will be used for
-decoding and the typedef return will be the original typedef + any new fields
-in the message.
+'message_type' 或类型定义（typedef）是 blackboxprotobuf 特定的格式，
+用于定义每个字段解码/编码时应使用的类型。
+解码函数中是可选的，但编码函数中必须提供。
+解码函数会返回一个 typedef，该 typedef 用于重新编码消息。
+如果在解码时提供了 typedef，则会使用这些类型进行解码，
+返回的 typedef 将是原始 typedef 加上消息中任何新字段的组合。
 
-The config argument is the Config object from `blackboxprotobuf.lib.config` and
-allows reconfiguring default types and stores "known" message typedefs that can
-be referenced within other typedefs. This argument can be left out to use a
-default shared config object.
+config 参数来自 `blackboxprotobuf.lib.config` 的 Config 对象，
+允许重新配置默认类型，并存储可在其他 typedef 中引用的"已知"消息 typedef。
+可以省略此参数以使用默认的共享配置对象。
 """
 
 # Copyright (c) 2018-2024 NCC Group Plc
@@ -55,7 +52,7 @@ from blackboxprotobuf.lib.typedef import TypeDef
 if six.PY3:
     import typing
 
-    # Circular imports on Config if we don't check here
+    # 如果不在这里检查，Config 会有循环导入
     if typing.TYPE_CHECKING:
         from typing import Dict, List, Optional
         from blackboxprotobuf.lib.pytypes import Message, TypeDefDict, FieldDefDict
@@ -64,26 +61,21 @@ if six.PY3:
 
 def decode_message(buf, message_type=None, config=None):
     # type: (bytes, Optional[str | TypeDefDict], Optional[Config]) -> tuple[Message, TypeDefDict]
-    """Decode a protobuf message and return a python dictionary representing
-    the message.
+    """解码 protobuf 消息并返回表示该消息的 Python 字典。
 
     Args:
-        buf: Bytes representing an encoded protobuf message
-        message_type: Optional type to use as the base for decoding. Allows for
-            customizing field types or names. Can be a python dictionary or a
-            message type name which maps to the `known_types` dictionary in the
-            config. Defaults to an empty definition '{}'.
-        config: `blackboxprotobuf.lib.config.Config` object which allows
-            customizing default types for wire types and holds the
-            `known_types` array. Defaults to
-            `blackboxprotobuf.lib.config.default` if not provided.
+        buf: 表示编码后的 protobuf 消息的字节数据
+        message_type: 可选，用作解码基础的类型。允许自定义字段类型或名称。
+            可以是 Python 字典，也可以是对应 config 中 `known_types` 字典的消息类型名称。
+            默认为空定义 '{}'。
+        config: `blackboxprotobuf.lib.config.Config` 对象，允许自定义
+            线类型的默认类型，并包含 `known_types` 数组。
+            如果未提供，默认为 `blackboxprotobuf.lib.config.default`。
     Returns:
-        A tuple containing a python dictionary representing the message and a
-        type definition for re-encoding the message.
+        包含表示消息的 Python 字典和用于重新编码消息的类型定义的元组。
 
-        The type definition is based on the `message_type` argument if one was
-        provided, but may add additional fields if new fields were encountered
-        during decoding.
+        类型定义基于提供的 `message_type` 参数（如果提供），
+        但在解码过程中遇到新字段时可能会添加额外的字段。
     """
 
     if config is None:
@@ -112,20 +104,18 @@ def decode_message(buf, message_type=None, config=None):
 
 def encode_message(value, message_type, config=None):
     # type: (Message, str | TypeDefDict, Optional[Config]) -> bytes
-    """Re-encode a python dictionary as a binary protobuf message.
+    """将 Python 字典重新编码为二进制 protobuf 消息。
 
     Args:
-        value: Python dictionary to re-encode to bytes. This should usually be
-            a modified version of the dictionary returned by `decode_message`.
-        message_type: Type definition to use to re-encode the message. This
-            will should generally be the type definition returned from the
-            original `decode_message` call.
-        config: `blackboxprotobuf.lib.config.Config` object which allows
-            customizing default types for wire types and holds the
-            `known_types` array. Defaults to
-            `blackboxprotobuf.lib.config.default` if not provided.
+        value: 要重新编码为字节的 Python 字典。通常是
+            由 `decode_message` 返回的字典的修改版本。
+        message_type: 用于重新编码消息的类型定义。
+            通常是原始 `decode_message` 调用返回的类型定义。
+        config: `blackboxprotobuf.lib.config.Config` 对象，允许自定义
+            线类型的默认类型，并包含 `known_types` 数组。
+            如果未提供，默认为 `blackboxprotobuf.lib.config.default`。
     Returns:
-        A bytearray containing the encoded protobuf message.
+        包含编码后的 protobuf 消息的字节数组。
     """
 
     if config is None:
@@ -157,29 +147,23 @@ def encode_message(value, message_type, config=None):
 
 def protobuf_to_json(buf, message_type=None, config=None):
     # type: (bytes | list[bytes], Optional[str | TypeDefDict], Optional[Config]) -> tuple[str, TypeDefDict]
-    """Decode a protobuf messages and return a JSON string representing the
-    messages.
+    """解码 protobuf 消息并返回表示消息的 JSON 字符串。
 
     Args:
-        buf: One or more bytes representing encoded protobuf messages
-        message_type: Optional type to use as the base for decoding. Allows for
-            customizing field types or names. Can be a python dictionary or a
-            message type name which maps to the `known_types` dictionary in the
-            config. Defaults to an empty definition '{}'.
-        config: `blackboxprotobuf.lib.config.Config` object which allows
-            customizing default types for wire types and holds the
-            `known_types` array. Defaults to
-            `blackboxprotobuf.lib.config.default` if not provided.
+        buf: 一个或多个表示编码后的 protobuf 消息的字节数据
+        message_type: 可选，用作解码基础的类型。允许自定义字段类型或名称。
+            可以是 Python 字典，也可以是对应 config 中 `known_types` 字典的消息类型名称。
+            默认为空定义 '{}'。
+        config: `blackboxprotobuf.lib.config.Config` 对象，允许自定义
+            线类型的默认类型，并包含 `known_types` 数组。
+            如果未提供，默认为 `blackboxprotobuf.lib.config.default`。
     Returns:
-        A tuple containing a JSON string representing the messages and a type
-        definition for re-encoding the messages.
+        包含表示消息的 JSON 字符串和用于重新编码消息的类型定义的元组。
 
-        The JSON string and type definition are annotated and sorted for
-        readability.
+        JSON 字符串和类型定义为了可读性而进行了注释和排序。
 
-        The type definition is based on the `message_type` argument if one was
-        provided, but may add additional fields if new fields were encountered
-        during decoding.
+        类型定义基于提供的 `message_type` 参数（如果提供），
+        但在解码过程中遇到新字段时可能会添加额外的字段。
     """
     values = []
     bufs = buf if isinstance(buf, list) else [buf]
@@ -194,7 +178,7 @@ def protobuf_to_json(buf, message_type=None, config=None):
         values.append(value)
 
     if not isinstance(message_type, dict):
-        # Shouldn't happen because of len(bufs) check, but make the type checker happy and verify edge cases
+        # 由于 len(bufs) 检查不应发生，但让类型检查器满意并验证边界情况
         raise DecoderException(
             "Error decoding to json: Could not find valid message_type type (dict). Found: %s"
             % type(message_type)
@@ -210,21 +194,18 @@ def protobuf_to_json(buf, message_type=None, config=None):
 
 def protobuf_from_json(json_str, message_type, config=None):
     # type: (str, str | TypeDefDict, Optional[Config]) -> bytes | list[bytes]
-    """Re-encode a JSON string as a binary protobuf message.
+    """将 JSON 字符串重新编码为二进制 protobuf 消息。
 
     Args:
-        json_str: JSON string to re-encode to protobuf message bytes. This
-            should usually be a modified version of the value returned by
-            `protobuf_to_json`.
-        message_type: Type definition to use to re-encode the message. This
-            will should generally be the type definition returned from the
-            original `protobuf_to_json` call.
-        config: `blackboxprotobuf.lib.config.Config` object which allows
-            customizing default types for wire types and holds the
-            `known_types` array. Defaults to
-            `blackboxprotobuf.lib.config.default` if not provided.
+        json_str: 要重新编码为 protobuf 消息字节的 JSON 字符串。
+            通常是 `protobuf_to_json` 返回的值的修改版本。
+        message_type: 用于重新编码消息的类型定义。
+            通常是原始 `protobuf_to_json` 调用返回的类型定义。
+        config: `blackboxprotobuf.lib.config.Config` 对象，允许自定义
+            线类型的默认类型，并包含 `known_types` 数组。
+            如果未提供，默认为 `blackboxprotobuf.lib.config.default`。
     Returns:
-        A bytearray containing the encoded protobuf message.
+        包含编码后的 protobuf 消息的字节数组。
     """
     if config is None:
         config = default_config
@@ -258,15 +239,12 @@ def protobuf_from_json(json_str, message_type, config=None):
 
 def export_protofile(message_types, output_filename):
     # type: (Dict[str, TypeDefDict], str) -> None
-    """This function attempts to export a set of message type definitions to a
-    `.proto` file for use with other tools.
+    """此函数尝试将一组消息类型定义导出为 `.proto` 文件，以便与其他工具一起使用。
 
     Args:
-        message_types: Python dictionary containing the type definitions to
-            export. The dictionary should contain the message type name as the
-            key and the type definition as the value.
-        output_filename: String representing the filename to output the
-            protobuf definition file to.
+        message_types: 包含要导出的类型定义的 Python 字典。
+            字典的键为消息类型名称，值为类型定义。
+        output_filename: 表示输出 protobuf 定义文件的文件名字符串。
     """
     blackboxprotobuf.lib.protofile.export_proto(
         message_types, output_filename=output_filename
@@ -275,24 +253,21 @@ def export_protofile(message_types, output_filename):
 
 def import_protofile(input_filename, save_to_known=True, config=None):
     # type: (str, bool, Optional[Config]) -> Dict[str, TypeDefDict] | None
-    """This function attempts to import a set of message type definitions from a
-    `.proto` file.
+    """此函数尝试从 `.proto` 文件导入一组消息类型定义。
 
-    This is a convenience function for `blackboxprotobuf.lib.protofile`. The
-    protobuf file import support is not complete and may fail for some type
-    definitions.
+    这是 `blackboxprotobuf.lib.protofile` 的便捷函数。
+    protobuf 文件导入支持不完整，可能对某些类型定义失败。
 
     Args:
-        input_filename: Filename to read the protobuf definitions from.
-        save_to_known: If True, this function will save the message type
-            definitions to `config.known_types`. Otherwise, it will return them
-            to the caller. Defaults to `True`.
-        config: Optional config object which stores the `known_types` map.
-            Defaults to `blackboxprotobuf.lib.config.default`.
+        input_filename: 要读取 protobuf 定义的文件名。
+        save_to_known: 如果为 True，此函数将消息类型定义
+            保存到 `config.known_types`。否则，将其返回给调用者。
+            默认为 `True`。
+        config: 可选配置对象，存储 `known_types` 映射。
+            默认为 `blackboxprotobuf.lib.config.default`。
     Returns:
-        If `save_to_known` is False, then the type definitions read from the
-        file are returned as a dictionary, with the type names as the keys and
-        type definitions as the values.
+        如果 `save_to_known` 为 False，则从文件读取的类型定义
+        以字典形式返回，键为类型名称，值为类型定义。
     """
     if config is None:
         config = default_config
@@ -312,27 +287,24 @@ NAME_REGEX = re.compile(r"\A[a-zA-Z][a-zA-Z0-9_]*\Z")
 
 def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
     # type: (TypeDefDict, Optional[TypeDefDict], Optional[Config], Optional[List[str]]) -> None
-    """Attempt to validate a type definition object is valid.
+    """尝试验证类型定义对象是否有效。
 
-    This function attempts to ensure a type definition is valid before it is
-    used to encode/decode a message. This will make sure the field names are
-    valid and field names/numbers are consistent. It is intended to be called
-    after a user has edited the type definition to ensure the edits are valid.
+    此函数尝试确保类型定义在用于编码/解码消息之前是有效的。
+    它将确保字段名称有效且字段名称/编号一致。
+    旨在在用户编辑类型定义后调用，以确保编辑有效。
 
     Args:
-        typedef: The type definition object to validate. This should be a
-            python dict derived from the dict returned  by a decode function.
-        old_typedef: Optionally provide a old version of the type definition to
-            compare the new type definnition to. If provided, this function
-            will ensure any type changes are valid. For example, a field with a
-            varint type can be changed to other varint types, but not a string
-            or float.
-        config: Optionally provide a config object which contains the
-            `known_types` map to map message type names to known type definitions.
-            Defaults to `blackboxprotobuf.lib.config.default`.
+        typedef: 要验证的类型定义对象。应为从解码函数返回的
+            Python 字典派生而来。
+        old_typedef: 可选，提供旧版本的类型定义以与新类型定义进行比较。
+            如果提供，此函数将确保任何类型更改是有效的。
+            例如，varint 类型的字段可以更改为其他 varint 类型，
+            但不能更改为字符串或浮点数。
+        config: 可选，提供包含 `known_types` 映射的配置对象，
+            用于将消息类型名称映射到已知的类型定义。
+            默认为 `blackboxprotobuf.lib.config.default`。
     Raises:
-        TypedefException: Raises a TypedefException if the provided type
-            definition is not valid.
+        TypedefException: 如果提供的类型定义无效，则引发 TypedefException。
     """
     if _path is None:
         _path = []
@@ -346,7 +318,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
         if "-" in str(field_number):
             field_number, alt_field_number = field_number.split("-")
 
-        # Validate field_number is a number
+        # 验证 field_number 是数字
         if not str(field_number).isdigit():
             raise TypedefException("Field number must be a digit: %s" % field_number)
         field_number = six.ensure_text(str(field_number))
@@ -354,14 +326,14 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
         field_path = _path[:]
         field_path.append(field_number)
 
-        # Check for duplicate field numbers
+        # 检查重复的字段编号
         if field_number in int_keys:
             raise TypedefException(
                 "Duplicate field number: %s" % field_number, field_path
             )
         int_keys.add(field_number)
 
-        # Must have a type field
+        # 必须有 type 字段
         if "type" not in field_typedef:
             raise TypedefException(
                 "Field number must have a type value: %s" % field_number, field_path
@@ -385,7 +357,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
             "seen_repeated",
         ]
         for key, value in field_typedef.items():
-            # Check field keys against valid values
+            # 检查字段键是否为有效值
             if key not in valid_type_fields:
                 raise TypedefException(
                     'Invalid field key "%s" for field number %s' % (key, field_number),
@@ -405,14 +377,14 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
                     field_path,
                 )
 
-            # Validate type value
+            # 验证 type 值
             if key == "type":
                 if value not in blackboxprotobuf.lib.types.type_maps.WIRETYPES:
                     raise TypedefException(
                         'Invalid type "%s" for field number %s' % (value, field_number),
                         field_path,
                     )
-            # Check for duplicate names
+            # 检查重复的名称
             if key == "name":
                 if not isinstance(value, six.string_types):
                     raise TypedefException(
@@ -440,7 +412,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
                     )
                 field_names.add(value.lower())
 
-            # Check if message type name is known
+            # 检查消息类型名称是否已知
             if key == "message_type_name":
                 if value not in config.known_types:
                     raise TypedefException(
@@ -452,7 +424,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
                         field_path,
                     )
 
-            # Recursively validate inner typedefs
+            # 递归验证内部 typedef
             if key == "message_typedef":
                 if isinstance(value, dict):
                     if (
@@ -502,22 +474,19 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
 
 def _json_safe_transform(values, typedef, toBytes, config=None):
     # type: (Message, TypeDefDict, bool, Optional[Config]) -> Message
-    # Python's JSON doesn't have a default way to handle 'bytes' types. To
-    # handle this, we want some string like encoding which JSON can handle but
-    # can also handle arbitrary bytes. This method get's more complicated than
-    # just converting all bytes since on re-encoding we need to know which ones
-    # were transformed and which are supposed to actually be strings
+    # Python 的 JSON 没有默认方式处理 'bytes' 类型。为了处理这个问题，
+    # 我们想要某种类似于字符串的编码，JSON 可以处理但也能处理任意字节。
+    # 这种方法比仅仅转换所有字节更复杂，因为在重新编码时，
+    # 我们需要知道哪些是转换过的，哪些原本就应该是字符串。
 
-    # A built-for binary encoding method like hex or base64 would be 'proper',
-    # but doesn't really give any information to a reader. In some cases, a
-    # binary blob may have embedded strings or integer values that would be
-    # beneficial to quickly skim.
+    # 像 hex 或 base64 这样为二进制设计的编码方式会更"合适"，
+    # 但对于阅读者来说并不能提供任何信息。在某些情况下，
+    # 二进制 blob 中可能包含内嵌的字符串或整数值，快速浏览会很有帮助。
 
-    # This uses latin1 encoding because it can handle arbitrary bytes, prints
-    # ASCII characters and can be decoded back to the same exact byte string.
-    # It's possible I missed another encoding method that matches these
-    # properties across python2.7 and python3.9, but had issues with some other
-    # backslash escape mechanisms parsing back to bytes.
+    # 这里使用 latin1 编码，因为它可以处理任意字节，
+    # 打印 ASCII 字符，并且可以解码回完全相同字节串。
+    # 可能还有其他编码方式在 Python2.7 和 Python3.9 中都满足这些属性，
+    # 但在处理其他反斜杠转义机制时，解析回字节时遇到了问题。
 
     if config is None:
         config = default_config
@@ -527,8 +496,8 @@ def _json_safe_transform(values, typedef, toBytes, config=None):
         if ("name" in item and item["name"] != "")
     }
     if not isinstance(values, dict):
-        # this function should only ever be called on a message, error out if
-        # it is not one. This usually means a type got swapped around
+        # 此函数只应在消息上调用，如果不是则报错退出。
+        # 这通常意味着类型被错误地交换了。
         raise EncoderException(
             "Error performing _json_safe_transform on message. Field was expected to be a message but was not: %r"
             % values
@@ -556,7 +525,7 @@ def _json_safe_transform(values, typedef, toBytes, config=None):
         if field_type == "message":
             field_typedef = _get_typedef_for_message(typedef[field_number], config)
             if alt_number is not None:
-                # if we have an alt type, then let's look that up instead
+                # 如果有替代类型，则查找它
                 if alt_number not in typedef[field_number].get("alt_typedefs", {}):
                     raise TypedefException(
                         (
@@ -586,7 +555,7 @@ def _json_safe_transform(values, typedef, toBytes, config=None):
                     config=config,
                 )
 
-        # convert back to single value if needed
+        # 如果需要，转换回单值
         if not is_list:
             values[name] = field_values[0]
         else:
@@ -614,13 +583,12 @@ def _get_typedef_for_message(field_typedef, config):
 
 def _sort_output(value, typedef, config=None):
     # type: (Message, TypeDefDict, Optional[Config]) -> Message
-    # Sort output by the field number in the typedef. Helps with readability in
-    # a JSON dump
+    # 按 typedef 中的字段编号排序输出。有助于提高 JSON 转储的可读性。
     output_dict = collections.OrderedDict()  # type: Message
     if config is None:
         config = default_config
 
-    # Make a list of all the field names we have, aggregate together the alt fields as well
+    # 创建所有字段名称的列表，同时聚合替代字段
     field_names = {}  # type: Dict[str, List[tuple[str, str | None]]]
     for field_name in value.keys():
         if isinstance(field_name, int):
@@ -636,7 +604,7 @@ def _sort_output(value, typedef, config=None):
         field_number = six.ensure_text(str(field_number))
         seen_field_names = field_names.get(field_number, [])
 
-        # Try getting matching fields by name as well
+        # 也尝试按名称获取匹配的字段
         if field_def.get("name", "") != "":
             field_name = field_def["name"]
             seen_field_names.extend(field_names.get(field_name, []))
@@ -697,20 +665,18 @@ def _sort_output(value, typedef, config=None):
 
 def sort_typedef(typedef):
     # type: (TypeDefDict) -> TypeDefDict
-    """Apply special sorting rules to the type definition to improve readability.
+    """对类型定义应用特殊排序规则以提高可读性。
 
-    Sorts the fields of a type definition so that important fields such as the
-    'type' or 'name' are at the top and don't get buried beneath longer fields
-    like 'message_typedef'. This will also sort the keys of the
-    'message_typedef' based on the field number.
+    对类型定义的字段进行排序，使得 'type' 或 'name' 等重要字段
+    位于顶部，不会被 'message_typedef' 等较长字段埋没。
+    同时也会根据字段编号对 'message_typedef' 的键进行排序。
     Args:
-        typedef - dictionary representing a Blackboxprotobuf type definition
+        typedef - 表示 Blackboxprotobuf 类型定义的字典
     Returns:
-        A new OrderedDict object containing the contents of the typedef
-        argument sorted for readability.
+        一个新的 OrderedDict 对象，包含为可读性排序后的 typedef 参数内容。
     """
 
-    # Sort output by field number and sub_keys so name then type is first
+    # 按字段编号和子键排序，使 name 和 type 排在前面
 
     TYPEDEF_KEY_ORDER = [
         "name",
@@ -726,11 +692,11 @@ def sort_typedef(typedef):
 
     for field_number, field_def in sorted(
         typedef.items(), key=lambda t: int(t[0])
-    ):  # Sort by type number
+    ):  # 按类型编号排序
         output_field_def = collections.OrderedDict()
         for key, value in sorted(
             field_def.items(), key=lambda t: (TYPEDEF_KEY_ORDER.index(t[0]), t[1])
-        ):  # sort by special keys, then value
+        ):  # 按特殊键排序，然后按值排序
             if key == "message_typedef":
                 output_field_def[key] = sort_typedef(value)  # type: ignore
             else:
@@ -746,8 +712,7 @@ def sort_typedef(typedef):
 
 def _annotate_typedef(typedef, message):
     # type: (TypeDefDict, Message) -> None
-    # Add values from message into the typedef so it's easier to figure out
-    # which field when you're editing manually
+    # 将消息中的值添加到 typedef 中，以便在手动编辑时更容易确定哪个字段对应什么值
 
     for field_number, field_def in typedef.items():
         field_value = None
@@ -767,15 +732,14 @@ def _annotate_typedef(typedef, message):
             else:
                 field_def["example_value_ignored"] = field_value
 
-        # Add a blank name field if the field doesn't have one, so it's easier
-        # to add
+        # 如果字段没有名称，添加一个空名称字段，以便更容易添加
         if "name" not in field_def:
             field_def["name"] = six.u("")
 
 
 def _strip_typedef_annotations(typedef):
     # type: (TypeDefDict) -> None
-    # Remove example values placed by _annotate_typedef
+    # 移除由 _annotate_typedef 添加的示例值
     for _, field_def in typedef.items():
         if "example_value_ignored" in field_def:
             del field_def["example_value_ignored"]

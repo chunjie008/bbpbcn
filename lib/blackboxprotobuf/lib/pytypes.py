@@ -1,6 +1,4 @@
-"""This module provides top level types for adding type definitions to the
-blackboxprotobuf library.
-"""
+"""此模块提供顶层类型，用于向 blackboxprotobuf 库添加类型定义。"""
 
 # Copyright (c) 2018-2024 NCC Group Plc
 #
@@ -28,9 +26,9 @@ import six
 if six.PY3:
     from typing import Any, Dict, List, TypedDict
 
-    # We say messages can have any value
-    # Functions we define may have fixed types, but someone could add a type
-    # function that outputs any arbitrary object
+    # 消息可以包含任何值
+    # 我们定义的函数可能有固定类型，但有人可能添加一个
+    # 输出任意对象的类型函数
     Message = Dict[str | int, Any]
 
     TypeDefDict = Dict[str, "FieldDefDict"]

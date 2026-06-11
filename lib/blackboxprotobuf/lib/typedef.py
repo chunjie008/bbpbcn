@@ -58,16 +58,16 @@ class TypeDef(object):
     def make_mutable(self):
         # type: (TypeDef) -> MutableTypeDef
         mutable = MutableTypeDef()
-        # Copy fields but don't deep copy
-        # They should get immutable copies of FieldDef
+        # 复制字段但不深度复制
+        # 它们应该获得 FieldDef 的不可变副本
         mutable._fields = self._fields.copy()
 
         return mutable
 
     def lookup_fielddef(self, key):
         # type: (TypeDef, str) -> Optional[Tuple[str, FieldDef]]
-        """Look up a field definition by number (w/ alt typedef) or name"""
-        # We don't care what the alt number is now
+        """按编号（附带替代 typedef）或名称查找字段定义"""
+        # 我们现在不关心替代编号是多少
         field_name = key.split("-", 1)[0]
 
         field_id = self._field_names.get(field_name, field_name)
@@ -98,9 +98,9 @@ class FieldDef(object):
         self._name = None  # type: Optional[str]
         self._field_id = field_id  # type: str
         self._message_type_name = None  # type: Optional[str]
-        # Normal type will be 0, alts starting at 1
-        # Each field will have either the type or a typedef
-        # We don't allow message_type_name in alt_typedefs, we'll use it for any "message" entry instead
+        # 普通类型为 0，替代类型从 1 开始
+        # 每个字段要么是类型，要么是 typedef
+        # 不在 alt_typedefs 中使用 message_type_name，而是用于任何"message"条目
         self._types = {}  # type: Dict[str, str | TypeDef]
         self._example_value = None  # type: Any
         self._seen_repeated = False  # type: bool
@@ -125,7 +125,7 @@ class FieldDef(object):
                 fielddef._types["0"] = field_type
 
         if "message_type_name" in fielddef_dict:
-            # We could lookup the typedef, but better to wait to resolve
+            # 可以先查找 typedef，但最好等待解析
             fielddef._message_type_name = fielddef_dict["message_type_name"]
 
         if "alt_typedefs" in fielddef_dict:
@@ -200,7 +200,7 @@ class FieldDef(object):
 
         return self.lookup_field_type_number(alt_type_id, config, field_path)
 
-    # Lookup fieled type by just alt type number
+    # 仅通过替代类型编号查找字段类型
     def lookup_field_type_number(self, alt_type_id, config, field_path):
         # type: (FieldDef, str, Config, List[str]) -> Optional[str | TypeDef]
 
@@ -209,7 +209,7 @@ class FieldDef(object):
 
         field_type = self._types[alt_type_id]
         if field_type == "message":
-            # We have to look up the message type name
+            # 必须查找消息类型名称
             return self.resolve_message_type_name(config, field_path)
 
         return field_type
@@ -239,8 +239,7 @@ class FieldDef(object):
     @property
     def field_order(self):
         # type: (FieldDef) -> Optional[List[str]]
-        # someone could mutate the list returned, but that's not a high
-        # priority
+        # 有人可能会改变返回的列表，但这不是高优先级问题
         return self._field_order
 
     @property

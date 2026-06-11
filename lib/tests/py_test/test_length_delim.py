@@ -37,7 +37,7 @@ else:
     string_types = str
 
 
-# Inverse checks. Ensure a value encoded by bbp decodes to the same value
+# 逆运算检查。确保 bbp 编码的值解码后得到相同的值
 @given(x=strategies.input_map["bytes"])
 def test_bytes_inverse(x):
     encoded = length_delim.encode_bytes(x)
@@ -48,11 +48,11 @@ def test_bytes_inverse(x):
     assert decoded == x
 
 
-# Inverse checks. Ensure a value encoded by bbp decodes to the same value
+# 逆运算检查。确保 bbp 编码的值解码后得到相同的值
 @given(x=strategies.input_map["bytes"])
 def test_bytes_guess_inverse(x):
     config = Config()
-    # wrap the message in a new message so that it's a guess inside
+    # 将消息包装在一个新消息中，以便内部进行类型猜测
     wrapper_typedef = {"1": {"type": "bytes"}}
     wrapper_message = {"1": x}
 
@@ -64,7 +64,7 @@ def test_bytes_guess_inverse(x):
     )
     typedef = typedef.to_dict()
 
-    # would like to fail if it guesses wrong, but sometimes it might parse as a message
+    # 如果猜测错误时希望测试失败，但有时可能会解析为消息
     assume(typedef["1"]["type"] == "bytes")
 
     assert isinstance(encoded, bytearray)
@@ -124,16 +124,16 @@ def test_anon_decode(x):
         encoded, config, TypeDef(), 0
     )
     typedef_out = typedef_out.to_dict()
-    note("Original message: %r" % message)
-    note("Decoded message: %r" % decoded)
-    note("Original typedef: %r" % typedef)
-    note("Decoded typedef: %r" % typedef_out)
+    note("原始消息: %r" % message)
+    note("解码消息: %r" % decoded)
+    note("原始 typedef: %r" % typedef)
+    note("解码 typedef: %r" % typedef_out)
 
     def check_message(orig, orig_typedef, new, new_typedef):
         for field_number in set(orig.keys()) | set(new.keys()):
-            # Skip cases where we accidentally wind up with an alt-typedef
+            # 跳过意外得到替代 typedef 的情况
             assume("-" not in field_number)
-            # verify all fields are there
+            # 验证所有字段都存在
             assert field_number in orig
             assert field_number in orig_typedef
             assert field_number in new
@@ -144,23 +144,23 @@ def test_anon_decode(x):
             orig_type = orig_typedef[field_number]["type"]
             new_type = new_typedef[field_number]["type"]
 
-            note("Parsing field# %s" % field_number)
-            note("orig_values: %r" % orig_values)
-            note("new_values: %r" % new_values)
-            note("orig_type: %s" % orig_type)
-            note("new_type: %s" % new_type)
-            # Fields might be lists. Just convert everything to a list
+            note("解析字段# %s" % field_number)
+            note("原始值: %r" % orig_values)
+            note("新值: %r" % new_values)
+            note("原始类型: %s" % orig_type)
+            note("新类型: %s" % new_type)
+            # 字段可能是列表。将所有内容转换为列表
             if not isinstance(orig_values, list):
                 orig_values = [orig_values]
                 assert not isinstance(new_values, list)
                 new_values = [new_values]
 
-            # if the types don't match, then try to convert them
+            # 如果类型不匹配，尝试转换
             if new_type == "message" and orig_type in ["bytes", "string"]:
-                # if the type is a message, we want to convert the orig type to a message
-                # this isn't ideal, we'll be using the unintended type, but
-                # best way to compare. Re-encoding a  message to binary might
-                # not keep the field order
+                # 如果类型是消息，我们希望将原始类型转换为消息
+                # 这并不理想，我们将使用非预期的类型，但
+                # 这是比较的最佳方式。将消息重新编码为二进制可能
+                # 不会保持字段顺序
                 new_field_typedef = new_typedef[field_number]["message_typedef"]
                 for i, orig_value in enumerate(orig_values):
                     if orig_type == "bytes":
@@ -176,7 +176,7 @@ def test_anon_decode(x):
                         )
                         orig_field_typedef = orig_field_typedef.to_dict()
                     else:
-                        # string value
+                        # 字符串值
                         (
                             orig_values[i],
                             orig_field_typedef,
@@ -192,13 +192,13 @@ def test_anon_decode(x):
                 orig_type = "message"
 
             if new_type == "string" and orig_type == "bytes":
-                # our bytes were accidently valid string
+                # 我们的字节被意外地解释成了有效字符串
                 new_type = "bytes"
                 for i, new_value in enumerate(new_values):
                     new_values[i], _ = length_delim.decode_bytes(
                         length_delim.encode_string(new_value), 0
                     )
-            # sort the lists with special handling for dicts
+            # 对列表进行排序，对字典特殊处理
             orig_values.sort(key=lambda x: x if not isinstance(x, dict) else x.items())
             new_values.sort(key=lambda x: x if not isinstance(x, dict) else x.items())
             for orig_value, new_value in zip(orig_values, new_values):
@@ -229,14 +229,14 @@ def test_anon_decode(x):
 def test_message_guess_inverse(x):
     config = Config()
     type_def, message = x
-    # wrap the message in a new message so that it's a guess inside
+    # 将消息包装在一个新消息中，以便内部进行类型猜测
     wrapper_typedef = {"1": {"type": "message", "message_typedef": type_def}}
     wrapper_message = {"1": message}
 
     encoded = length_delim.encode_lendelim_message(
         wrapper_message, config, TypeDef.from_dict(wrapper_typedef)
     )
-    note("Encoded length %d" % len(encoded))
+    note("编码长度 %d" % len(encoded))
     value, decoded_type, _, pos = length_delim.decode_lendelim_message(
         encoded, config, TypeDef()
     )
@@ -253,11 +253,11 @@ def test_message_guess_inverse(x):
 
 @given(bytes_in=st.binary())
 def test_message_guess_bytes(bytes_in):
-    # Test that a given byte array can be decoded anonymously then re-encoded to the same bytes
+    # 测试给定的字节数组可以在不提供类型的情况下解码，然后重新编码为相同的字节
 
     config = Config()
 
-    # embed it in a another message so we get proper type guessing
+    # 将其嵌入到另一个消息中，以便进行正确的类型猜测
     wrapper_typedef = {"1": {"type": "bytes"}}
     wrapper_message = {"1": bytes_in}
     bytes_in = length_delim.encode_message(
@@ -277,24 +277,24 @@ def test_message_guess_bytes(bytes_in):
 
 @given(x=strategies.gen_message(anon=True), rng=st.randoms())
 def test_message_ordering(x, rng):
-    # messages need to preserve field ordering when encoding then decoding
-    # ordering technically shouldn't matter in a protobuf message, but if we
-    # decode a non-protobuf message as a protobuf and then re-encode it to
-    # bytes, it will scramble the bytes and violate the rule that decoding then
-    # re-encoding shouldn't change the message
+    # 消息在编码然后解码时需要保持字段顺序
+    # 理论上 protobuf 消息中字段顺序不应重要，但如果
+    # 将一个非 protobuf 消息解码为 protobuf 然后再重新编码为
+    # 字节，将会打乱字节顺序并违反"解码然后
+    # 重新编码不应改变消息"的规则
     config = Config()
     typedef, message = x
 
-    # wrap the message in a new message so that it's a guess inside
+    # 将消息包装在一个新消息中，以便内部进行类型猜测
     typedef = {"1": {"type": "message", "message_typedef": typedef}}
     message = {"1": message}
 
-    # encode to bytes first
+    # 先编码为字节
     message_bytes = length_delim.encode_message(
         message, config, TypeDef.from_dict(typedef)
     )
 
-    # now we have bytes that could be decoded as a message, we don't care what the original typedef is
+    # 现在我们有可以解码为消息的字节，我们不关心原始 typedef 是什么
     decoded_message, typedef, _, _ = length_delim.decode_message(
         message_bytes, config, TypeDef()
     )
@@ -393,7 +393,7 @@ def test_packed_double_inverse(x):
 
 
 def test_seen_repeated():
-    # Make sure seen_repeated gets set and perserved
+    # 确保 seen_repeated 被设置并保留
     config = Config()
 
     message = {"1": [1, 2, 3], "2": [{"1": 1}, {"1": 1}]}
@@ -402,7 +402,7 @@ def test_seen_repeated():
         "2": {"type": "message", "message_typedef": {"1": {"type": "int"}}},
     }
 
-    # Make sure we set seen_repeated for lists with multiple items
+    # 确保我们为包含多个项目的列表设置了 seen_repeated
     encoded = length_delim.encode_lendelim_message(
         message, config, TypeDef.from_dict(typedef)
     )
@@ -423,7 +423,7 @@ def test_seen_repeated():
         encoded, config, TypeDef.from_dict(typedef), 0
     )
     typedef_out = typedef_out.to_dict()
-    # Make sure we don't set seen_repeated for single
+    # 确保我们不为单个值设置 seen_repeated
     assert "seen_repeated" not in typedef_out["1"]
     assert "seen_repeated" not in typedef_out["2"]
 
@@ -433,20 +433,20 @@ def test_seen_repeated():
         encoded, config, TypeDef.from_dict(typedef), 0
     )
     typedef_out = typedef_out.to_dict()
-    # Make sure we preserve seen_repeated and output as a list
+    # 确保我们保留 seen_repeated 并输出为列表
     assert "seen_repeated" in typedef_out["1"]
     assert typedef_out["1"]["seen_repeated"]
-    # Make sure our output is a list, even though it only has one list
+    # 确保输出为列表，即使只有一个元素
     assert isinstance(decoded["1"], list)
 
     assert "seen_repeated" in typedef_out["2"]
     assert typedef_out["2"]["seen_repeated"]
-    # Make sure our output is a list, even though it only has one list
+    # 确保输出为列表，即使只有一个元素
     assert isinstance(decoded["2"], list)
 
 
 def test_immutable_typedef():
-    # we want to ensure that the original typedef is never modified by a decode operation
+    # 确保原始 typedef 永远不会被解码操作修改
     config = Config()
 
     typedef0 = {
@@ -510,7 +510,7 @@ def test_immutable_typedef():
 
 @given(x=st.binary())
 def test_bytes_fallback(x):
-    # Make sure we fallback to bytes, event if our default_binary_type fails
+    # 确保即使我们的 default_binary_type 失败，也能回退到 bytes
     config = Config()
     config.default_binary_type = "string"
 

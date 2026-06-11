@@ -1,5 +1,5 @@
-"""Contains various maps for protobuf types, including encoding/decoding
-functions, wiretypes and default types
+"""包含 protobuf 类型的各种映射，包括编码/解码
+函数、线缆类型（wiretype）和默认类型
 """
 
 # Copyright (c) 2018-2024 NCC Group Plc
@@ -29,7 +29,7 @@ import six
 if six.PY3:
     from typing import Any, Callable, Dict, Tuple
 
-# Map a blackboxprotobuf type to specific encoder
+# 将 blackboxprotobuf 类型映射到具体的编码器
 ENCODERS = {
     "uint": varint.encode_uvarint,
     "int": varint.encode_varint,
@@ -54,7 +54,7 @@ ENCODERS = {
     "packed_double": length_delim.generate_packed_encoder(fixed.encode_double),
 }  # type: Dict[str, Callable[[Any], bytes]]
 
-# Map a blackboxprotobuf type to specific decoder
+# 将 blackboxprotobuf 类型映射到具体的解码器
 DECODERS = {
     "uint": varint.decode_uvarint,
     "int": varint.decode_varint,
@@ -105,8 +105,8 @@ WIRETYPES = {
     "packed_double": wiretypes.LENGTH_DELIMITED,
 }  # type: Dict[str, int]
 
-# Default values to use when decoding each wire type
-# length delimited is special and handled in the length_delim module
+# 解码每个线缆类型时使用的默认值
+# length delimited 是特殊的，在 length_delim 模块中处理
 WIRE_TYPE_DEFAULTS = {
     wiretypes.VARINT: "int",
     wiretypes.FIXED32: "fixed32",

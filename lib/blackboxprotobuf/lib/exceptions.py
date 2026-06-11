@@ -1,4 +1,4 @@
-"""Exception classes for BlackboxProtobuf"""
+"""BlackboxProtobuf 的异常类"""
 
 # Copyright (c) 2018-2024 NCC Group Plc
 #
@@ -27,7 +27,7 @@ if six.PY3:
 
 
 class BlackboxProtobufException(Exception):
-    """Base class for excepions raised by Blackbox Protobuf"""
+    """Blackbox Protobuf 引发的异常的基类"""
 
     def __init__(self, message, path=None, *args):
         # type: (str, Optional[List[str]], Any) -> None
@@ -41,8 +41,7 @@ class BlackboxProtobufException(Exception):
 
 
 class TypedefException(BlackboxProtobufException):
-    """Thrown when an error is identified in the type definition, such as
-    conflicting or inconsistent values."""
+    """当类型定义中识别出错误时抛出，例如冲突或不一致的值。"""
 
     def __str__(self):
         # type: (TypedefException) -> str
@@ -58,7 +57,7 @@ class TypedefException(BlackboxProtobufException):
 
 
 class EncoderException(BlackboxProtobufException, ValueError):
-    """Thrown when there is an error encoding a dictionary to a type definition"""
+    """当将字典编码为类型定义时出错时抛出"""
 
     def __str__(self):
         # type: (EncoderException) -> str
@@ -73,7 +72,7 @@ class EncoderException(BlackboxProtobufException, ValueError):
 
 
 class DecoderException(BlackboxProtobufException, ValueError):
-    """Thrown when there is an error decoding a bytestring to a dictionary"""
+    """当将字节串解码为字典时出错时抛出"""
 
     def __str__(self):
         # type: (DecoderException) -> str

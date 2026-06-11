@@ -22,7 +22,7 @@ import os
 import sys
 import inspect
 
-# Add correct directory to sys.path
+# 将正确的目录添加到 sys.path
 _BASE_DIR = os.path.abspath(
     os.path.dirname(inspect.getfile(inspect.currentframe())) + "../../../"
 )
@@ -31,14 +31,13 @@ sys.path.insert(0, _BASE_DIR + "/lib/")
 sys.path.insert(0, _BASE_DIR + "/burp/deps/six/")
 sys.path.insert(0, _BASE_DIR + "/burp/deps/protobuf/python/")
 
-# extend_path looks for other 'blackboxprotobuf' modules in the sys.path and
-# adds them to __path__
+# extend_path 会在 sys.path 中查找其他 'blackboxprotobuf' 模块并将它们添加到 __path__
 from pkgutil import extend_path
 
 __path__ = extend_path(__path__, __name__)
 
 
-# Hack to fix loading protobuf libraries within Jython. See https://github.com/protocolbuffers/protobuf/issues/7776
+# 修复在 Jython 中加载 protobuf 库的 Hack 方法。参见 https://github.com/protocolbuffers/protobuf/issues/7776
 def fix_protobuf():
     import six
 
@@ -46,7 +45,7 @@ def fix_protobuf():
 
     def new_u(s):
         if s == r"[\ud800-\udfff]":
-            # Don't match anything
+            # 不匹配任何内容
             return "$^"
         else:
             return u(s)
@@ -56,5 +55,5 @@ def fix_protobuf():
 
 fix_protobuf()
 
-# mirror what we do in lib so we can use blackboxprotobuf.<function>
+# 镜像 lib 中的操作，以便我们可以使用 blackboxprotobuf.<function>
 from blackboxprotobuf.lib.api import *

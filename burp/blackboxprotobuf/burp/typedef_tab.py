@@ -1,6 +1,5 @@
-""" TypeDefinitionTab is a top-level Burp Suite tab which allows saved/named
-    types to be added/modified at any time. It also adds options for
-    importing/exporting protobuf types to .json files.
+""" TypeDefinitionTab 是 Burp Suite 的顶层选项卡，允许随时添加/修改已保存/命名的
+    类型。它还提供了将 protobuf 类型导入/导出到 .json 文件的选项。
 """
 
 # Copyright (c) 2018-2023 NCC Group Plc
@@ -40,12 +39,12 @@ from blackboxprotobuf.lib.config import default as default_config
 
 from blackboxprotobuf.burp import typedef_editor
 
-# TODO put these in one place
+# TODO 将这些放在一个地方
 NAME_REGEX = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 
 
 class TypeDefinitionTab(burp.ITab):
-    """Implements an interface for editing known message type definitions."""
+    """实现编辑已知消息类型定义的接口。"""
 
     def __init__(self, extension, burp_callbacks):
         self._burp_callbacks = burp_callbacks
@@ -70,44 +69,44 @@ class TypeDefinitionTab(burp.ITab):
         self._component.setBorder(EmptyBorder(10, 10, 10, 10))
 
     def getTabCaption(self):
-        """Returns name on tab"""
+        """返回选项卡名称"""
         return "Protobuf Type Editor"
 
     def getUiComponent(self):
-        """Returns Java AWT component for tab"""
+        """返回选项卡的 Java AWT 组件"""
         return self._component
 
     def createButtonPane(self):
-        """Create AWT window panel for buttons"""
+        """创建按钮的 AWT 窗口面板"""
         self._button_listener = TypeDefinitionButtonListener(self)
 
         panel = JPanel()
         panel.setLayout(BoxLayout(panel, BoxLayout.Y_AXIS))
 
         panel.add(Box.createRigidArea(Dimension(0, 5)))
-        panel.add(self.createButton("Add", "new-type", "Create a new type"))
+        panel.add(self.createButton("Add", "new-type", "创建新类型"))
         panel.add(Box.createRigidArea(Dimension(0, 3)))
-        panel.add(self.createButton("Edit", "edit-type", "Edit the selected type"))
+        panel.add(self.createButton("Edit", "edit-type", "编辑选中的类型"))
         panel.add(Box.createRigidArea(Dimension(0, 3)))
         panel.add(
-            self.createButton("Rename", "rename-type", "Rename the selected type")
+            self.createButton("Rename", "rename-type", "重命名选中的类型")
         )
         panel.add(Box.createRigidArea(Dimension(0, 3)))
         panel.add(
-            self.createButton("Remove", "delete-type", "Delete all selected types")
+            self.createButton("Remove", "delete-type", "删除所有选中的类型")
         )
         panel.add(Box.createRigidArea(Dimension(0, 3)))
         panel.add(
             self.createButton(
                 "Save All Types To File",
                 "save-types",
-                "Save all known types as JSON to a file",
+                "将所有已知类型保存为 JSON 到文件",
             )
         )
         panel.add(Box.createRigidArea(Dimension(0, 3)))
         panel.add(
             self.createButton(
-                "Load All Types From File", "load-types", "Load types from JSON file"
+                "Load All Types From File", "load-types", "从 JSON 文件加载类型"
             )
         )
         panel.add(Box.createRigidArea(Dimension(0, 3)))
@@ -115,20 +114,20 @@ class TypeDefinitionTab(burp.ITab):
             self.createButton(
                 "Export All types As .proto",
                 "export-proto",
-                "Export all types as .proto",
+                "将所有类型导出为 .proto",
             )
         )
         panel.add(Box.createRigidArea(Dimension(0, 3)))
         panel.add(
             self.createButton(
-                "Import .proto", "import-proto", "Import types from a .proto file"
+                "Import .proto", "import-proto", "从 .proto 文件导入类型"
             )
         )
         panel.add(Box.createRigidArea(Dimension(0, 3)))
         return panel
 
     def createButton(self, text, command, tooltip):
-        """Generate new button with the given text and command string"""
+        """使用给定的文本和命令字符串生成新按钮"""
         button = JButton(text)
         button.setAlignmentX(Component.CENTER_ALIGNMENT)
         button.setActionCommand(command)
@@ -137,7 +136,7 @@ class TypeDefinitionTab(burp.ITab):
         return button
 
     def save_callback(self, typedef, name):
-        """Save typedef and update list for a given message name"""
+        """保存给定消息名称的 typedef 并更新列表"""
         if name not in default_config.known_types:
             self._extension.known_message_model.addElement(name)
 
@@ -146,7 +145,7 @@ class TypeDefinitionTab(burp.ITab):
     def add_typedef(self):
         type_name = JOptionPane.showInputDialog("Enter new name")
 
-        # Error out if already defined
+        # 如果已定义则报错
         if type_name in default_config.known_types:
             JOptionPane.showMessageDialog(
                 self._component,
@@ -170,13 +169,13 @@ class TypeDefinitionTab(burp.ITab):
 
 
 class TypeDefinitionButtonListener(ActionListener):
-    """Callback listener for buttons in the TypeDefinition interface"""
+    """TypeDefinition 界面中按钮的回调监听器"""
 
     def __init__(self, typedef_tab):
         self._typedef_tab = typedef_tab
 
     def actionPerformed(self, event):
-        """Called when a button is pressed."""
+        """当按钮被按下时调用。"""
         if event.getActionCommand() == "new-type":
             self._typedef_tab.add_typedef()
 
@@ -185,11 +184,11 @@ class TypeDefinitionButtonListener(ActionListener):
 
         elif event.getActionCommand() == "rename-type":
             list_component = self._typedef_tab._type_list_component
-            # Check if something is selected
+            # 检查是否选择了某个类型
             if list_component.isSelectionEmpty():
                 return
 
-            # Get's only the first value
+            # 仅获取第一个值
             previous_type_name = list_component.getSelectedValue()
             new_type_name = JOptionPane.showInputDialog(
                 "Enter new name for %s:" % previous_type_name
@@ -215,7 +214,7 @@ class TypeDefinitionButtonListener(ActionListener):
             typedef = default_config.known_types[previous_type_name]
             default_config.known_types[new_type_name] = typedef
             del default_config.known_types[previous_type_name]
-            # TODO should manage this centrally somewhere
+            # TODO 应该在某个地方集中管理这个
             self._typedef_tab._extension.refresh_message_model()
             for key, typename in self._typedef_tab._extension.saved_types.items():
                 if typename == previous_type_name:
@@ -223,12 +222,12 @@ class TypeDefinitionButtonListener(ActionListener):
 
         elif event.getActionCommand() == "delete-type":
             list_component = self._typedef_tab._type_list_component
-            # Check if something is selected
+            # 检查是否选择了某个类型
             if list_component.isSelectionEmpty():
                 return
 
             type_names = list_component.getSelectedValuesList()
-            # TODO Confirm delete?
+            # TODO 确认删除？
             for type_name in type_names:
                 del default_config.known_types[type_name]
             self._typedef_tab._extension.refresh_message_model()
@@ -250,7 +249,7 @@ class TypeDefinitionButtonListener(ActionListener):
             file_name = chooser.getSelectedFile().getCanonicalPath()
             ext = os.path.splitext(file_name)[1]
             if ext != ".json":
-                # Add json extension if it doesn't have one
+                # 如果没有扩展名则添加 json 扩展名
                 file_name += ".json"
 
             with open(file_name, "w+") as selected_file:
@@ -280,7 +279,7 @@ class TypeDefinitionButtonListener(ActionListener):
             with open(file_name, "r") as selected_file:
                 types = json.load(selected_file)
             for key, value in types.items():
-                # check to make sure we don't nuke existing messages
+                # 检查以确保不会覆盖现有消息
                 if key in default_config.known_types:
                     overwrite = (
                         JOptionPane.showConfirmDialog(
@@ -310,11 +309,11 @@ class TypeDefinitionButtonListener(ActionListener):
             file_name = chooser.getSelectedFile().getCanonicalPath()
             ext = os.path.splitext(file_name)[1]
             if ext == "":
-                # No extension, add .proto
+                # 无扩展名，添加 .proto
                 file_name += ".proto"
 
             if os.path.exists(file_name):
-                # 0 is the YES option
+                # 0 表示"是"选项
                 overwrite = (
                     JOptionPane.showConfirmDialog(
                         self._typedef_tab._component,
@@ -363,7 +362,7 @@ class TypeDefinitionButtonListener(ActionListener):
                     file_name, save_to_known=False
                 )
                 for key, value in new_typedefs.items():
-                    # check to make sure we don't nuke existing messages
+                    # 检查以确保不会覆盖现有消息
                     if key in default_config.known_types:
                         overwrite = (
                             JOptionPane.showConfirmDialog(

@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-""" The payloads module is intended to handle different encodings of the
-    protobuf data, such as compression and grpc header. """
+""" payloads 模块旨在处理 protobuf 数据的不同编码方式，
+    例如压缩和 grpc 头部。 """
 
 from blackboxprotobuf.lib.exceptions import BlackboxProtobufException
 from . import gzip, grpc
@@ -30,14 +30,14 @@ if six.PY3:
     from typing import List, Callable, Tuple, Optional
 
 
-# Returns an ordered list of potential decoders, from most specific to least specific
-# The consumer should loop through each decoder, try to decode it and then try
-# to decode as a protobuf. This should minimize the chance of a false positive
-# on any decoders
+# 返回一个有序的潜在解码器列表，从最具体到最不具体
+# 使用者应遍历每个解码器，尝试解码，然后尝试
+# 解码为 protobuf。这应尽量减少任何解码器的
+# 误报概率
 def find_decoders(buf):
     # type: (bytes) -> List[Callable[[bytes], Tuple[bytes | list[bytes], str]]]
-    # In the future, we can take into account content-type too, such as for
-    # grpc, but we risk false negatives
+    # 将来，我们也可以考虑 content-type，例如
+    # grpc，但这有误报的风险
     decoders = []  # type: List[Callable[[bytes], Tuple[bytes | list[bytes], str]]]
 
     if gzip.is_gzip(buf):
@@ -55,7 +55,7 @@ def _none_decoder(buf):
     return buf, "none"
 
 
-# Decoder by name
+# 按名称解码
 def decode_payload(buf, decoder):
     # type: (bytes, Optional[str]) -> Tuple[bytes | list[bytes], str]
     if decoder is None:
@@ -71,7 +71,7 @@ def decode_payload(buf, decoder):
         raise BlackboxProtobufException("Unknown decoder: " + decoder)
 
 
-# Encode by name, should pass in the results from the decode function
+# 按名称编码，应传入 decode 函数的结果
 def encode_payload(buf, encoder):
     # type: (bytes | list[bytes], Optional[str]) -> bytes
     if encoder is None:

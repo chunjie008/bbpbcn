@@ -29,7 +29,7 @@ payload_type = "grpc"
 
 async def handle_messages(websocket):
     async for message in websocket:
-        print(f"Got message: {type(message)} {message}")
+        print(f"收到消息: {type(message)} {message}")
         data = message
         if payload_type == "gzip":
             data = zlib.decompress(data, wbits=31)
@@ -40,10 +40,10 @@ async def handle_messages(websocket):
             length = struct.unpack_from(">I", data[1:])[0]
             data = old_data[5:]
             assert length == len(data)
-        print("Got data: %s" % data)
+        print("收到数据: %s" % data)
         message = Test_pb2.TestMessage()
         message.ParseFromString(data)
-        print("Got message: %s" % data)
+        print("收到消息: %s" % data)
 
         message.testString += "_server"
         output = message.SerializeToString()
@@ -51,7 +51,7 @@ async def handle_messages(websocket):
         if payload_type == "gzip":
             output = zlib.compress(output, level=9, wbits=31)
         elif payload_type == "grpc":
-            # Fake grpc wrapper
+            # 伪 grpc 包装
             length = len(output)
             old_output = output
             output = bytearray()
@@ -64,7 +64,7 @@ async def handle_messages(websocket):
 
 async def main():
     async with serve(handle_messages, "localhost", 8000):
-        await asyncio.Future()  # run forever
+        await asyncio.Future()  # 永久运行
 
 
 asyncio.run(main())

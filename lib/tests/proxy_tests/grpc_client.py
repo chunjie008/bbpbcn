@@ -36,4 +36,4 @@ with grpc.secure_channel(
 ) as channel:
     stub = Test_pb2_grpc.TestServiceStub(channel)
     response = stub.TestRPC(Test_pb2.TestMessage(testString="test123"))
-    print("Got response: %s" % response)
+    print("收到响应: %s" % response)
