@@ -40,7 +40,7 @@ class Config:
         # 或将固定字段改为浮点数）
         self.default_types = {}  # type: Dict[int, str]
 
-        # 配置 bbpb 是否应尝试按解码时的相同顺序重新编码字段
+        # 配置 bbpbcn 是否应尝试按解码时的相同顺序重新编码字段
         # 字段顺序对于真正的 protobuf 来说应该不重要，
         # 但确保字节/字符串在解码/重新编码时不会意外地
         # 打乱恰好是有效 protobuf 的数据

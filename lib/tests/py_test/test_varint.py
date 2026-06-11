@@ -145,8 +145,8 @@ def _gen_append_bytearray(arr):
 def test_uvarint_encode(x):
     encoded_google = bytearray()
     encoder._EncodeVarint(_gen_append_bytearray(encoded_google), x)
-    encoded_bbpb = varint.encode_uvarint(x)
-    assert encoded_google == encoded_bbpb
+    encoded_bbpbcn = varint.encode_uvarint(x)
+    assert encoded_google == encoded_bbpbcn
 
 
 @given(x=strategies.input_map["uint"])
@@ -157,16 +157,16 @@ def test_uvarint_decode(x):
     if six.PY2:
         buf = str(buf)
     decoded_google, _ = decoder._DecodeVarint(buf, 0)
-    decoded_bbpb, _ = varint.decode_uvarint(buf, 0)
-    assert decoded_google == decoded_bbpb
+    decoded_bbpbcn, _ = varint.decode_uvarint(buf, 0)
+    assert decoded_google == decoded_bbpbcn
 
 
 @given(x=strategies.input_map["int"])
 def test_varint_encode(x):
     encoded_google = bytearray()
     encoder._EncodeSignedVarint(_gen_append_bytearray(encoded_google), x)
-    encoded_bbpb = varint.encode_varint(x)
-    assert encoded_google == encoded_bbpb
+    encoded_bbpbcn = varint.encode_varint(x)
+    assert encoded_google == encoded_bbpbcn
 
 
 @given(x=strategies.input_map["int"])
@@ -177,8 +177,8 @@ def test_varint_decode(x):
     if six.PY2:
         buf = bytes(buf)
     decoded_google, _ = decoder._DecodeSignedVarint(buf, 0)
-    decoded_bbpb, _ = varint.decode_varint(buf, 0)
-    assert decoded_google == decoded_bbpb
+    decoded_bbpbcn, _ = varint.decode_varint(buf, 0)
+    assert decoded_google == decoded_bbpbcn
 
 
 @given(x=strategies.input_map["sint"])
@@ -187,8 +187,8 @@ def test_svarint_encode(x):
     encoder._EncodeSignedVarint(
         _gen_append_bytearray(encoded_google), wire_format.ZigZagEncode(x)
     )
-    encoded_bbpb = varint.encode_svarint(x)
-    assert encoded_google == encoded_bbpb
+    encoded_bbpbcn = varint.encode_svarint(x)
+    assert encoded_google == encoded_bbpbcn
 
 
 @given(x=strategies.input_map["sint"])
@@ -201,6 +201,6 @@ def test_svarint_decode(x):
         buf = bytes(buf)
     decoded_google_uint, _ = decoder._DecodeVarint(buf, 0)
     decoded_google = wire_format.ZigZagDecode(decoded_google_uint)
-    decoded_bbpb, _ = varint.decode_svarint(buf, 0)
+    decoded_bbpbcn, _ = varint.decode_svarint(buf, 0)
 
-    assert decoded_google == decoded_bbpb
+    assert decoded_google == decoded_bbpbcn

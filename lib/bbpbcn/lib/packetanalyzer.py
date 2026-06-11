@@ -431,7 +431,7 @@ def format_text(result):
             lines.append(f'    #{r["packet"]}: {status}')
         if valid_count > 0 and valid_count == len(proto_results):
             lines.append('')
-            lines.append(f'    Payload 是完全有效的 protobuf -- 使用 bbpb decode 查看')
+            lines.append(f'    Payload 是完全有效的 protobuf -- 使用 bbpbcn decode 查看')
     else:
         lines.append('    （无 payload 可分析）')
 

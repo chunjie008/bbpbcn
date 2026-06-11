@@ -1,4 +1,4 @@
-﻿[tool.poetry]
+[tool.poetry]
 name = "bbpbcn"
 version = "1.4.2"
 description = "Forked from blackboxprotobuf. Enhanced protobuf blind decode with better type inference (nesting, VARINT, Fixed heuristic). Chinese comments & docs."

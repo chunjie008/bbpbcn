@@ -352,7 +352,7 @@ def _encode(args, message, typedef, payload_encoding):
     if not payload_encoding:
         payload_encoding = "none"
 
-    # 重新 JSON 化以便 bbpb 可以处理字节
+    # 重新 JSON 化以便 bbpbcn 可以处理字节
     message_json = json.dumps(message)
 
     protobuf_data = api.protobuf_from_json(message_json, typedef)

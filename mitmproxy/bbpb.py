@@ -20,7 +20,7 @@ import logging
 try:
     import bbpbcn
 except ModuleNotFoundError:
-    # 两个 abspath 是因为 dirname 如果只运行 bbpb.py 会返回空字符串
+    # 两个 abspath 是因为 dirname 如果只运行 bbpbcn.py 会返回空字符串
     _BASE_DIR = os.path.abspath(
         os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
         + "/.."
@@ -55,7 +55,7 @@ class bbpbcnAddon:
     def __init__(self):
         self.view = bbpbcnView(self)
 
-        self.bbpb_config = bbpbcn.lib.config.Config()
+        self.bbpbcn_config = bbpbcn.lib.config.Config()
         self.typedef_lookup = {}
         self.project_file = None
 
@@ -63,14 +63,14 @@ class bbpbcnAddon:
         contentviews.add(self.view)
 
         loader.add_option(
-            "bbpb_project_file",
+            "bbpbcn_project_file",
             typespec=str,
             default="",
             help="将 known_types 和 typedef 映射持久化到项目文件。文件会自动写入，因此建议定期备份",
         )
 
     def _load_project_file(self, project_file: str | None = None):
-        self.project_file = ctx.options.bbpb_project_file
+        self.project_file = ctx.options.bbpbcn_project_file
 
         if not project_file and not self.project_file:
             return
@@ -86,9 +86,9 @@ class bbpbcnAddon:
             with open(project_file, "r") as f:
                 project_data = json.load(f)
 
-            # 以防我们有现有数据，更新已有的 typedef_lookup 和 bbpb_config
+            # 以防我们有现有数据，更新已有的 typedef_lookup 和 bbpbcn_config
             self.typedef_lookup.update(project_data["typedef_lookup"])
-            self.bbpb_config.known_types.update(project_data["known_types"])
+            self.bbpbcn_config.known_types.update(project_data["known_types"])
         except FileNotFoundError:
             # 我们还没有写入任何内容，所以文件可能还不存在
             pass
@@ -104,22 +104,22 @@ class bbpbcnAddon:
         logging.info("正在将项目数据写入文件")
         data = {
             "typedef_lookup": self.typedef_lookup,
-            "known_types": self.bbpb_config.known_types,
+            "known_types": self.bbpbcn_config.known_types,
         }
         with open(project_file, "w") as f:
             json.dump(data, f, indent=2)
 
     def configure(self, updates: set[str]):
-        if "bbpb_project_file" in updates:
+        if "bbpbcn_project_file" in updates:
             self._load_project_file()
             self._save_project_file()
 
     def done(self):
         contentviews.remove(self.view)
 
-    @command.command("bbpb.edit")
-    @command.argument("flow_part", type=types.Choice("bbpb.options.edit_part"))
-    def bbpb_edit(self, flow_part: str) -> None:
+    @command.command("bbpbcn.edit")
+    @command.argument("flow_part", type=types.Choice("bbpbcn.options.edit_part"))
+    def bbpbcn_edit(self, flow_part: str) -> None:
         flow = ctx.master.view.focus.flow
 
         if flow_part == "request-body":
@@ -140,7 +140,7 @@ class bbpbcnAddon:
 
         typedef = self.typedef_lookup.get(message_hash)
         message_json, typedef_out, encoding_alg = _decode_protobuf(
-            message.content, typedef, self.bbpb_config
+            message.content, typedef, self.bbpbcn_config
         )
 
         def message_callback(edited_json: str) -> None:
@@ -153,9 +153,9 @@ class bbpbcnAddon:
 
         _spawn_validating_editor(message_json, message_callback)
 
-    @command.command("bbpb.edit_type")
-    @command.argument("flow_part", type=types.Choice("bbpb.options.edit_type_part"))
-    def bbpb_edit_type(self, flow_part: str) -> None:
+    @command.command("bbpbcn.edit_type")
+    @command.argument("flow_part", type=types.Choice("bbpbcn.options.edit_type_part"))
+    def bbpbcn_edit_type(self, flow_part: str) -> None:
         flow = ctx.master.view.focus.flow
 
         typedef, message_hash = self._resolve_type(flow_part)
@@ -172,7 +172,7 @@ class bbpbcnAddon:
             known_type = self.typedef_lookup.get(message_hash)
             if isinstance(known_type, str):
                 # 这是一个命名 typedef，编辑已知的 typedef 而不是保存的值
-                self.bbpb_config.known_types[known_type] = new_typedef
+                self.bbpbcn_config.known_types[known_type] = new_typedef
                 self._save_project_file()
             else:
                 # 信任 validate_typedef，不尝试再次使用 typedef 解码或重新编码
@@ -183,12 +183,12 @@ class bbpbcnAddon:
 
         _spawn_validating_editor(typedef_json, typedef_callback)
 
-    @command.command("bbpb.apply_type")
-    @command.argument("flow_part", type=types.Choice("bbpb.options.edit_type_part"))
-    @command.argument("typename", type=types.Choice("bbpb.options.known_types"))
-    def bbpb_apply_type(self, flow_part: str, typename: str) -> None:
+    @command.command("bbpbcn.apply_type")
+    @command.argument("flow_part", type=types.Choice("bbpbcn.options.edit_type_part"))
+    @command.argument("typename", type=types.Choice("bbpbcn.options.known_types"))
+    def bbpbcn_apply_type(self, flow_part: str, typename: str) -> None:
         flow = ctx.master.view.focus.flow
-        if typename not in self.bbpb_config.known_types and typename != "(clear)":
+        if typename not in self.bbpbcn_config.known_types and typename != "(clear)":
             raise exceptions.CommandError(f"类型 {typename} 不是已知类型")
         flow = ctx.master.view.focus.flow
         if not flow:
@@ -213,7 +213,7 @@ class bbpbcnAddon:
             # 验证我们是否可以使用新类型解码该消息
             try:
                 _decode_protobuf(
-                    message.content, typename, self.bbpb_config, fallback=False
+                    message.content, typename, self.bbpbcn_config, fallback=False
                 )
             except bbpbcnException as ex:
                 raise exceptions.CommandError(
@@ -258,7 +258,7 @@ class bbpbcnAddon:
             for message in messages:
                 try:
                     _decode_protobuf(
-                        message.content, typename, self.bbpb_config, fallback=False
+                        message.content, typename, self.bbpbcn_config, fallback=False
                     )
                 except bbpbcnException as ex:
                     raise exceptions.CommandError(
@@ -269,17 +269,17 @@ class bbpbcnAddon:
         self._save_project_file()
         self._refresh_view()
 
-    @command.command("bbpb.new_type")
-    @command.argument("flow_part", type=types.Choice("bbpb.options.edit_type_part"))
+    @command.command("bbpbcn.new_type")
+    @command.argument("flow_part", type=types.Choice("bbpbcn.options.edit_type_part"))
     @command.argument("typename", type=str)
-    def bbpb_new_type(self, flow_part: str, typename: str) -> None:
+    def bbpbcn_new_type(self, flow_part: str, typename: str) -> None:
         if typename == "(clear)":
             raise exceptions.CommandError(f"错误：类型名称 {typename} 无效。")
         typedef, message_hash = self._resolve_type(flow_part)
 
         bbpbcn.lib.api._strip_typedef_annotations(typedef)
         self.typedef_lookup[message_hash] = typename
-        self.bbpb_config.known_types[typename] = typedef
+        self.bbpbcn_config.known_types[typename] = typedef
         self._save_project_file()
 
         self._refresh_view()
@@ -300,7 +300,7 @@ class bbpbcnAddon:
             message_hash = _message_hash(message.content, message, flow)
             saved_typedef = self.typedef_lookup.get(message_hash)
             message_json, typedef, encoding_alg = _decode_protobuf(
-                message.content, saved_typedef, self.bbpb_config
+                message.content, saved_typedef, self.bbpbcn_config
             )
         elif flow_part.startswith("websocket"):
             # WebSocket 没有单一的 typedef 可编辑
@@ -336,7 +336,7 @@ class bbpbcnAddon:
                 message_jsons = []
                 for message in messages:
                     message_json, typedef, encoding_alg = _decode_protobuf(
-                        message.content, typedef, self.bbpb_config, fallback=False
+                        message.content, typedef, self.bbpbcn_config, fallback=False
                     )
                     message_jsons.append(message_json)
             except bbpbcnException:
@@ -344,7 +344,7 @@ class bbpbcnAddon:
                 message_jsons = []
                 for message in messages:
                     message_json, typedef, encoding_alg = _decode_protobuf(
-                        message.content, typedef, self.bbpb_config, fallback=False
+                        message.content, typedef, self.bbpbcn_config, fallback=False
                     )
                     message_jsons.append(message_json)
         else:
@@ -352,12 +352,12 @@ class bbpbcnAddon:
 
         return typedef, message_hash
 
-    @command.command("bbpb.del_type")
-    @command.argument("typename", type=types.Choice("bbpb.options.known_types"))
-    def bbpb_del_type(self, typename: str) -> None:
-        if typename not in self.bbpb_config.known_types:
+    @command.command("bbpbcn.del_type")
+    @command.argument("typename", type=types.Choice("bbpbcn.options.known_types"))
+    def bbpbcn_del_type(self, typename: str) -> None:
+        if typename not in self.bbpbcn_config.known_types:
             raise exceptions.CommandError(f"错误：类型 {typename} 未知")
-        self.bbpb_config.known_types.pop(typename, None)
+        self.bbpbcn_config.known_types.pop(typename, None)
         keys_to_remove = [
             key for key, value in self.typedef_lookup.items() if value == typename
         ]
@@ -366,8 +366,8 @@ class bbpbcnAddon:
         self._save_project_file()
         self._refresh_view()
 
-    @command.command("bbpb.options.edit_part")
-    def bbpb_options_edit_part(self) -> Sequence[str]:
+    @command.command("bbpbcn.options.edit_part")
+    def bbpbcn_options_edit_part(self) -> Sequence[str]:
         flow = ctx.master.view.focus.flow
         if not flow:
             raise exceptions.CommandError("未选择流程。")
@@ -386,8 +386,8 @@ class bbpbcnAddon:
         else:
             return ["request-body"]
 
-    @command.command("bbpb.options.edit_type_part")
-    def bbpb_options_edit_type_part(self) -> Sequence[str]:
+    @command.command("bbpbcn.options.edit_type_part")
+    def bbpbcn_options_edit_type_part(self) -> Sequence[str]:
         flow = ctx.master.view.focus.flow
         if flow.websocket:
             return ["websocket-request", "websocket-response"]
@@ -398,21 +398,21 @@ class bbpbcnAddon:
             ]
         return ["request-body"]
 
-    @command.command("bbpb.options.known_types")
-    def bbpb_options_known_types(self) -> Sequence[str]:
-        typenames = list(self.bbpb_config.known_types.keys())
+    @command.command("bbpbcn.options.known_types")
+    def bbpbcn_options_known_types(self) -> Sequence[str]:
+        typenames = list(self.bbpbcn_config.known_types.keys())
         return typenames + ["(clear)"]
 
     def _refresh_view(self):
         ctx.master.window.stacks[0].windows["flowview"].body.contentview_changed(None)
 
-    @command.command("bbpb.project.load")
-    def bbpb_project_load(self, project_file: str) -> None:
+    @command.command("bbpbcn.project.load")
+    def bbpbcn_project_load(self, project_file: str) -> None:
         # TODO 若有错误能传播到这里就好了
         self._load_project_file(project_file)
 
-    @command.command("bbpb.project.save")
-    def bbpb_project_save(self, project_file: str) -> None:
+    @command.command("bbpbcn.project.save")
+    def bbpbcn_project_save(self, project_file: str) -> None:
         # TODO 若有错误能传播到这里就好了
         self._save_project_file(project_file)
 
@@ -445,7 +445,7 @@ class bbpbcnView(contentviews.View):
         typedef = self.addon.typedef_lookup.get(message_hash)
 
         message, typedef_out, encoding_alg = _decode_protobuf(
-            data, typedef, self.addon.bbpb_config
+            data, typedef, self.addon.bbpbcn_config
         )
 
         title = "Protobuf"
@@ -509,7 +509,7 @@ def _message_hash(
             return f"websocket-request|{flow.request.url}"
     else:
         logging.warn(
-            f"BBPB 内容视图收到了既不是 websocket、请求也不是响应的视图: {type(http_message)}"
+            f"bbpbcn 内容视图收到了既不是 websocket、请求也不是响应的视图: {type(http_message)}"
         )
         return None
 
