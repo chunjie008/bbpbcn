@@ -1,160 +1,116 @@
-# Blackbox Protobuf Mitmproxy Addon
+# Blackbox Protobuf Mitmproxy 插件
 
-## Description
+## 描述
 
-This directory contains an addon for mitmproxy (<https://mitmproxy.org/>) which
-uses the Blackbox Protobuf library to decode and edit proxied protobuf messages.
+本目录包含一个 mitmproxy (<https://mitmproxy.org/>) 的插件，使用 Blackbox Protobuf 库来解码和编辑代理的 protobuf 消息。
 
+## 安装
 
-## Installation
-
-1. Clone the Blackboxprotobuf repository:
+1. 克隆 Blackboxprotobuf 仓库：
    
    ```
    git clone https://github.com/nccgroup/blackboxprotobuf.git
    ```
    
-2. Update the submodules which contain dependencies:
+2. 更新包含依赖的子模块：
    
    ```
    cd blackboxprotobuf/
    git submodule update --init
    ```
 
-3. Run mitmproxy with the addon:
+3. 使用该插件运行 mitmproxy：
    
    ```
    mitmproxy -s mitmproxy/bbpb.py
    ```
 
-### Alternative Installation
+### 替代安装方法
 
-1. Install the `bbpb` python package in the same context as
-   `mitmproxy`.
+1. 在与 `mitmproxy` 相同的环境中安装 `bbpb` Python 包。
    
    ```
    pip install bbpb
    ```
    
-   If `mitmproxy` is installed within a virtual environment, then the `bbpb`
-   package needs to be install within that virtual environment.
+   如果 `mitmproxy` 安装在虚拟环境中，则 `bbpb` 包也需要安装在该虚拟环境中。
 
-2. Download the `bbpb.py` from <https://github.com/nccgroup/blackboxprotobuf/blob/master/mitmproxy/bbpb.py>
+2. 从 <https://github.com/nccgroup/blackboxprotobuf/blob/master/mitmproxy/bbpb.py> 下载 `bbpb.py`。
 
-3. Run mitmproxy with the addon script:
+3. 使用该插件脚本运行 mitmproxy：
    
    ```
    mitmproxy -s mitmproxy/bbpb.py
    ```
 
+## 用法
 
-## Usage
+### 被动解码
 
-### Passive Decoding
+Blackbox Protobuf 插件提供了一个内容视图，可以自动解码 mitmproxy 中显示的 protobuf、gRPC 消息和 websocket。该内容视图在可用时会使用已保存的类型（例如，为字段命名或更改类型），否则默认进行匿名解码。
 
-The Blackbox Protobuf addon provides a content view to automatically decode
-protobuf and gRPC messages and websockets displayed in mitmproxy. The content
-view will use saved types if available (eg. to name fields or change types),
-but will default to an anonymous decoding.
+内容视图在 mitmweb 中也能工作，但编辑消息和类型的命令不可用。
 
-The content view should also work in mitmweb, but commands for editing messages
-and types will not be available.
+### 持久化类型数据
 
-### Persisting Type Data
+插件会记住已编辑的类型和关联的端点，但如果 mitmproxy 关闭或插件重新加载，这些数据将丢失。
 
-The addon will remember edited types and the associated endpoints, but this
-data will be lost if mitmproxy is shut down or the addon is reloaded.
+mitmproxy 配置中的 `bbpb_project_file` 选项将使插件从提供的文件加载类型，然后自动将任何更改写回文件。如果你有大量配置，建议定期备份项目文件以确保数据不被覆盖。
 
-The `bbpb_project_file` option in the mitmproxy configuration will cause the
-addon to load types from the provided file and then automatically write back
-any changes. If you have an extensive number of options, it's recommended to
-back up the project file regularly to ensure data isn't overwritten.
+类型也可以使用 `:bbpb.project.save` 和 `:bbpb.project.load` 命令手动保存或加载。
 
-The types can also be manually saved or loaded using the `:bbpb.project.save`
-and `:bbpb.project.load` commands.
+### 命令
 
-### Commands
+消息和类型编辑功能通过 mitmproxy 命令提供。
 
-Message and type editing functionality is provided via mitmproxy commands. 
+命令操作当前选中的 flow。大多数命令接受一个 `flow_part` 参数，指示所需的 protobuf payload 在消息中的位置。当前支持的 flow 部分有：
 
-The commands operate on the currently selected flow.  Most commands take a
-`flow_part` argument, which indicates where the desired protobuf payload is in the
-message. Currently supported flow parts are:
+* `request-body` — 请求体
+* `response-body` — 响应体
+* `websocket`（用于 `bbpb.edit`，`bbpb.edit_type` 不支持）
+* `websocket-request`（用于 `bbpb.edit_type`，`bbpb.edit` 不支持）
+* `websocket-response`（用于 `bbpb.edit_type`，`bbpb.edit` 不支持）
 
-* `request-body`
-* `response-body`
-* `websocket` (for `bbpb.edit`, not supported with `bbpb.edit_type`)
-* `websocket-request` (for `bbpb.edit_type`, not supported for `bbpb.edit`)
-* `websocket-response` (for `bbpb.edit_type`, not supported for `bbpb.edit`)
-
-Command arguments support tab completion.
+命令参数支持 tab 补全。
 
 #### `:bbpb.edit`
 
-The `:bbpb.edit` command will open a text editor with the protobuf decoded to
-JSON, similar to editing other HTTP messages in mitmproxy. The edited JSON
-payload will be re-encoded to protobuf to be replayed or resumed.
+`:bbpb.edit` 命令将打开一个文本编辑器，显示解码为 JSON 的 protobuf，类似于在 mitmproxy 中编辑其他 HTTP 消息。编辑后的 JSON payload 将被重新编码为 protobuf，以便重放或恢复。
 
+`request-body` 和 `response-body` flow 部分将编辑 HTTP body 中的 protobuf 消息。`websocket` flow 部分将编辑 websocket flow 中的最后一条消息。
 
-The `request-body` and `response-body` flow parts will edit protobuf messages
-in the HTTP body. The `websocket` flow parts will edit the last message in the
-websocket flow.
-
-The addon does not support protobuf payloads elsewhere in the HTTP message at
-the moment, though you should be able to customize the addon for a particular
-use case.
+该插件目前不支持 HTTP 消息其他位置的 protobuf payload，但你可以根据特定用例自定义插件。
 
 #### `:bbpb.edit_type`
 
-The `:bbpb.edit_type` command will open a text editor to edit the type
-definition used for the protobuf data. This can be used to add field names or
-change a field's type.
+`:bbpb.edit_type` 命令将打开一个文本编辑器，编辑用于 protobuf 数据的类型定义。这可用于添加字段名称或更改字段类型。
 
-If the endpoint is assigned a named type, then the named type is edited and the
-changes will be applied to all other endpoints using the same named type. If
-the type is not named, then the edited type definition is remembered just for
-that endpoint.
+如果端点分配了命名类型，则编辑的是该命名类型，更改将应用于使用相同命名类型的所有其他端点。如果类型未命名，则编辑后的类型定义仅对该端点生效。
 
 #### `:bbpb.new_type`
 
-The `:bbpb.new_type` command will attach a name to the current type and store
-it in `known_types`. A named type can then be applied to multiple endpoints and
-you can switch between named types at-will without losing the type definition.
+`:bbpb.new_type` 命令将为当前类型附加一个名称，并将其存储在 `known_types` 中。命名类型随后可以应用于多个端点，你可以在命名类型之间随意切换，而不会丢失类型定义。
 
-#### `:bbpb.apply_type` 
+#### `:bbpb.apply_type`
 
-The `:bbpb.apply_type` command will apply a previously saved named type to the
-endpoint/protobuf payload. Applying the type name of `(clear)` will remove the
-saved type for this endpoint, causing the decoding to be reset.
+`:bbpb.apply_type` 命令会将先前保存的命名类型应用于端点/protobuf payload。应用 `(clear)` 类型名称将移除该端点的已保存类型，使解码重置。
 
-Warning: If the current endpoint has an edited type which is not named, the
-edited type definition will be lost when a named type is applied.
+警告：如果当前端点有一个未命名的已编辑类型，应用命名类型时该编辑后的类型定义将丢失。
 
-If the current endpoint is associated with another named type, the named type
-will be safe and can be reapplied later.
+如果当前端点关联了另一个命名类型，该命名类型将安全保存，以后可以重新应用。
 
 #### `:bbpb.del_type`
 
-The `:bbpb.del_type` command can be used to remove a named type. Any endpoints associated with that named type will also be reset.
+`:bbpb.del_type` 命令用于删除命名类型。与该命名类型关联的所有端点也将被重置。
 
-#### `:bbpb.project.save` and `:bbpb.project.load`
+#### `:bbpb.project.save` 和 `:bbpb.project.load`
 
-These commands will manually save/load a one-off Blackbox Protobuf project JSON
-file. This file contains all edited type definitions and all endpoint to type
-definition mappings.
+这些命令将手动保存/加载一个一次性的 Blackbox Protobuf 项目 JSON 文件。该文件包含所有编辑过的类型定义以及所有端点到类型定义的映射。
 
-## gRPC Note
+## gRPC 说明
 
-This addon has been tested with a python gRPC and client and is able to
-intercept messages by default. However, in the past mitmproxy has had some
-issues with intercepting gRPC connections from certain applications, and would
-register connections as PRI methods, or fail to intercept the request.
+该插件已使用 Python gRPC 客户端测试过，能够默认拦截消息。然而，过去 mitmproxy 在拦截某些应用的 gRPC 连接时曾遇到过问题，会将连接注册为 PRI 方法，或无法拦截请求。
 
-The issue appears to be that some gRPC implementations use a unique `grpc-exp`
-ALPN value which proxies do not know how to handle. One work around that has
-worked in the past is cloning mitmproxy and changing if conditions which check
-for `h2` to also work for `grpc-exp`.
+问题似乎在于某些 gRPC 实现使用独特的 `grpc-exp` ALPN 值，代理不知道该值如何处理。过去有效的一种解决方法是克隆 mitmproxy 并修改检查 `h2` 的条件，使其也适用于 `grpc-exp`。
 
-Another potential solution is the addon modifications described at
-<https://github.com/mitmproxy/mitmproxy/issues/3052#issuecomment-1676020354>,
-but this has not been tested with the Blackbox Protobuf addon yet.
+另一个可能的解决方案是 <https://github.com/mitmproxy/mitmproxy/issues/3052#issuecomment-1676020354> 中描述的插件修改，但尚未经过 Blackbox Protobuf 插件的测试。

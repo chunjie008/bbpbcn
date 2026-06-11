@@ -1,234 +1,174 @@
-# Blackbox Protobuf Command Line Interface (CLI)
+# Blackbox Protobuf 命令行接口 (CLI)
 
-## Description
+## 描述
 
-The Blackbox Protobuf library has an embedded CLI interface which can be invoked
-with `python -m blackboxprotobuf` for use in shell scripts, to plug in to other
-tools, or easily decode arbitrary protobuf messages.
+Blackbox Protobuf 库内置了 CLI 接口，可通过 `python -m blackboxprotobuf` 调用，用于 shell 脚本、集成到其他工具或轻松解码任意的 protobuf 消息。
 
-## Installation
+## 安装
 
-The Blackbox Protobuf library can be installed with:
+Blackbox Protobuf 库可通过以下方式安装：
 
 ~~~
 pip install bbpb
 ~~~
 
-The command line interface can then be run with:
+然后可以通过以下命令运行命令行接口：
 
 ~~~
 bbpb
 ~~~
 
-or
+或
 
 ~~~
 python3 -m blackboxprotobuf
 ~~~
 
-## Usage
+## 用法
 
-### Examples
+### 示例
 
-Simple Decoder:
+简单解码器：
 ~~~
 cat test_data | bbpb -r
 ~~~
 
-Save type for editing:
+保存类型以便编辑：
 ~~~
 cat test_data | bbpb -ot ./saved_type.json
 ~~~
 
-Decode with type:
+使用类型解码：
 ~~~
 cat test_data | bbpb -it ./saved_type.json
 ~~~
 
-Decode edit and re-encode:
+解码、编辑和重新编码：
 ~~~
 cat test_data | bbpb  > message.json
 vim message.json
 cat message.json | bbpb -e > test_data_out
 ~~~
 
+### 解码
+CLI 解码模式（默认）接受 protobuf payload 和可选的类型定义，并输出一个包含解码消息和类型定义的 JSON 对象。
 
-### Decoding
-The CLI decoding mode (default) will take a protobuf payload and an option type
-defintion, and output a JSON object which contains the decoded message and a
-type definition.
+默认情况下，期望从 stdin 提供二进制 protobuf 消息。输入类型不能通过 stdin 提供，必须保存到文件并通过 `-it`/`--input-type` 参数提供。
 
-By default, the binary protobuf message is expected to be provided on stdin.
-The input type cannot be provided through stdin and must be saved to file and
-provided via the `-it`/`--input-type` argument.
+或者，`-j`/`--json-protobuf` 参数允许将 protobuf 消息和 typedef 作为单个 JSON 对象传入。输入的 JSON 对象应包含 `protobuf_data` 字段（包含 base64 编码的 protobuf 数据），并可选项包含 `typedef` 字段（包含输入类型定义）。此选项对于调用 CLI 的工具非常有用，它们可能不想将文件保存到磁盘来存储输入类型。
 
-Alternatively, the `-j`/`--json-protobuf` argument allows the protobuf message
-and typedef to be pass in as a single JSON object. The input JSON object should
-have a `protobuf_data` field which contains the base64 encoded protobuf data, and can
-optionally have a `typedef` field with the input type definition. This option
-is useful for tools calling the CLI which may not want to save files to disk
-for input types.
+解码器的默认输出是一个 JSON 对象，包含 `message` 字段中的解码消息和 `typedef` 字段中的解码所需 typedef。
 
+输出格式与 CLI 编码器期望的输入格式匹配，使消息可以轻松编辑和重新编码。
 
-The default output from the decoder will be a JSON object which contains the
-decoded message in the `message` field and the typedef necessary to decode the
-message in the `typedef` field.
+或者，`-r`/`--raw-decode` 参数将提供更简单的输出，仅包含 JSON 消息而不含类型定义。如果你只想查看消息而不想编辑，或通过 `-ot`/`--output-type` 参数将类型定义保存到文件，此选项很有用。
 
-The output format matches the expected input for the CLI encoder, allowing the
-message to be easily edited and re-encoded.
+`-it`/`--input-type` 和 `-ot`/`--output-type` 参数会让 CLI 从提供的文件读取和/或写入类型定义。
 
-Alternatively, the `-r`/`--raw-decode` argument will provide a simpler output
-with just the JSON message and no type definition. This is useful if you don't
-want to edit the message, just view it, or are saving the type definition to a
-file with `-ot`/`--output-type` argument.
+### 编码
 
+`-e`/`--encode` 参数将 CLI 置于编码模式，接受 JSON 消息和类型定义，并输出编码后的 protobuf 消息到 stdout。
 
-The `-it`/`--input-type` and `-ot`/`--output-type` arguments will have the CLI
-read and/or write type definitions to the provided file.
+默认情况下，CLI 期望通过 stdin 传入一个 JSON 对象，其中包含 `message` 字段（消息的 JSON 表示）和 `typedef` 字段（类型定义）。此格式应与 CLI 解码器的输出格式匹配。
 
-### Encoding
+类型定义也可以通过 `-it`/`--input-type` 参数指定的文件提供。如果通过此参数提供了类型定义，且输入 JSON 中没有 `message` 字段，编码器将使用整个输入 JSON 作为消息（例如，带 `-r`/`--raw-decode` 的解码器输出）。
 
-The `-e`/`--encode` argument put the CLI in encoding mode, which takes a JSON
-message type definition, and prints an encoded protobuf message to stdin.
+默认情况下，CLI 将编码后的 protobuf 字节输出到 stdout。
 
+或者，`-j`/`--json-protobuf` 命令行标志将输出包含 `protobuf_data` 和 `typedef` 属性的 JSON payload。protobuf 数据字段将包含 base64 编码的 protobuf 数据。此格式与带 `-j`/`--json-protobuf` 属性的解码器期望的输入格式匹配。
 
-By default, the CLI expects a JSON object through stdin which contains a
-`message` field with the JSON representation of the message and a `typedef`
-field with the type definition. This format should match the output of the CLI
-decoder.
+### 编辑
 
-The type definition can also be provided through a file specified with the
-`-it`/`--input-type` argument. If the type definition is provided through this
-argument and there is no `message` field on the input JSON, the encoder will
-use the entire input JSON as the message (eg. the output of the decoder with
-`-r`/`--raw-decode`).
+消息和 typedef 可以按照与其他 Blackbox Protobuf 接口相同的规则轻松编辑。
 
-By default, the CLI will output the encoded protobuf bytes to stdout.
+来自解码器的 JSON 消息可以编辑以轻松更改字段值，然后再将 payload 传回编码器。如果类型定义中定义了字段类型，并且添加的值与该类型定义匹配，则可以添加字段。
 
-Alternatively, the `-j`/`--json-protobuf` command line flag will output a JSON
-payload with `protobuf_data` and `typedef` attributes. The protobuf data field
-will contain base64 encoded protobuf data. This format matches the expected
-input of the decoder with the `-j`/`--json-protobuf` attribute.
+如果你想编辑类型定义以更改字段名称或类型，请从输出 payload 或通过 `-ot`/`--output-typedef` 参数保存类型定义。编辑类型定义，然后使用 `-it`/`--input-typedef` 再次执行解码步骤。
 
-### Editing
+不建议在将消息/typedef 传递给编码器之前直接编辑来自解码器的 typedef，因为这可能导致 payload 被错误编码。
 
-The messages and typedefs can be easily edited following the same rules as
-other Blackbox Protobuf interfaces.
+### Payload 编码
 
-The JSON message from the decoder can be edited to easily change field values,
-before passing the payload back to the encoder. It is possible to add fields if
-the field type is defined in the type definition and the added value matches
-the type definition.
+Blackbox Protobuf 库尝试自动处理几种"包装器"编码。该库目前支持 gzip 压缩和 gRPC 头部。解码时，库会尝试检测这些包装器并解包 protobuf payload。如果识别出 payload 编码，它将存储在输出 JSON 的 `payload_encoding` 字段中。编码器在编码 payload 时会重新应用该包装器。
 
-If you wish to edit the type definition to change field names or types, save
-the type definition from the output payload or the `-ot`/`--output-typedef`
-argument. Edit the type definition and then perform the decoding step again
-with `-it`/`--input-typedef`.
+如果未提供 payload 编码，编码器将默认为 "none"（表示纯 protobuf）。对于其他编码选项，payload 编码设置为 "gzip" 或 "grpc"。
 
-It is not recommended that you edit the typedef from the decoder directly
-before passing the message/typedef to the encoder, as this  may cause the
-payload to be encoded incorrectly.
+解码或编码时，可以通过 `-pe`/`--payload-encoding` 参数覆盖 payload 编码过程。
 
-### Payload Encoding
+### Hex 转换
 
-The Blackbox Protobuf library tries to automatically handle several "wrapper"
-encodings. The library currently supports gzip compression and gRPC headers.
-During decoding, the library will attempt to detect these wrappers and unpack
-the protobuf payload. If a payload encoding is identified, it is stored in
-`payload_encoding` field of the output JSON. The encoder will then re-apply the
-wrapper when the payload is encoded.
+`convert` 子命令将十六进制字符串独立于 protobuf 转换为各种数据类型（整数、浮点数、字符串等）。适用于分析 TCP 二进制协议、网络转储或任何十六进制编码数据。
 
-If the payload encoding is not provided, the encoder will default to "none"
-which indicates plain protobuf. The payload encoding is set to "gzip" or "grpc"
-for other encoding options.
+支持的 hex 输入格式：`01020304`、`01 02 03 04`、`01-02-03-04`、`0x01020304`。
 
-The payload encoding process can be overridden during decoding or encoding with
-the `-pe`/`--payload-encoding` argument.
+支持的类型：
 
-### Hex Convert
+| 类型 | 描述 | 字节数 |
+|------|------|--------|
+| `int8` / `uint8` | 8-bit 整数 | 1 |
+| `int16_le/be` / `uint16_le/be` | 16-bit 整数（小端/大端） | 2 |
+| `int24_le/be` / `uint24_le/be` | 24-bit 整数（小端/大端） | 3 |
+| `int32_le/be` / `uint32_le/be` | 32-bit 整数（小端/大端） | 4 |
+| `int64_le/be` / `uint64_le/be` | 64-bit 整数（小端/大端） | 8 |
+| `float_le/be` | 32-bit 浮点数 | 4 |
+| `double_le/be` | 64-bit 浮点数 | 8 |
+| `string` | UTF-8 字符串 | 可变 |
+| `hex_raw` | 规范化的 hex 输出 | — |
+| `bits` | 二进制表示 | — |
 
-The `convert` subcommand converts hex strings to various data types (integers,
-floats, strings, etc.) independently of protobuf. Useful for analyzing TCP
-binary protocols, network dumps, or any hex-encoded data.
-
-Supported hex input formats: `01020304`, `01 02 03 04`, `01-02-03-04`,
-`0x01020304`.
-
-Supported types:
-
-| Type | Description | Bytes |
-|------|-------------|-------|
-| `int8` / `uint8` | 8-bit integer | 1 |
-| `int16_le/be` / `uint16_le/be` | 16-bit integer (little/big endian) | 2 |
-| `int24_le/be` / `uint24_le/be` | 24-bit integer (little/big endian) | 3 |
-| `int32_le/be` / `uint32_le/be` | 32-bit integer (little/big endian) | 4 |
-| `int64_le/be` / `uint64_le/be` | 64-bit integer (little/big endian) | 8 |
-| `float_le/be` | 32-bit floating point | 4 |
-| `double_le/be` | 64-bit floating point | 8 |
-| `string` | UTF-8 string | variable |
-| `hex_raw` | Normalized hex output | - |
-| `bits` | Binary representation | - |
-
-Examples:
+示例：
 
 ```bash
-# Single hex string from argument
+# 从参数传入单个 hex 字符串
 bbpb convert -t int32_le 01020304
 
-# Hex string as float (little endian)
+# Hex 字符串作为浮点数（小端）
 bbpb convert -t float_le 0000803f
 
-# Hex string as UTF-8 string
+# Hex 字符串作为 UTF-8 字符串
 bbpb convert -t string 48656c6c6f
 
-# Big endian variant
+# 大端变体
 bbpb convert -t int32_be 01020304
 
-# Hex input from stdin pipe
+# 从 stdin 管道输入 hex
 echo "01020304" | bbpb convert -t int32_le
 
-# Multiple hex values from stdin (one per line)
+# 从 stdin 输入多个 hex 值（每行一个）
 printf "01020304\n05060708" | bbpb convert -t int32_le
 
-# JSON output
+# JSON 输出
 bbpb convert -t int32_le --json 01020304
 echo "01020304" | bbpb convert -t int32_le --json
 ```
 
-### Packet Analyze
+### 数据包分析
 
-The `analyze` subcommand analyzes multiple hex packets side-by-side to
-automatically detect header field structure: packet length, message ID, user
-ID, and protobuf payload boundaries. Useful for reverse engineering game
-protocols (TCP, UDP, WebSocket) without prior knowledge of the binary format.
+`analyze` 子命令并排分析多个十六进制数据包，自动检测头部字段结构：数据包长度、消息 ID、用户 ID 和 protobuf payload 边界。适用于在未知二进制格式的情况下逆向游戏协议（TCP、UDP、WebSocket）。
 
-Input: two or more hex packet strings from the same protocol session. Each
-packet is parsed and compared byte-by-byte. The analyzer scores byte offsets
-for length field and msgid field candidates based on value range and
-correlation with packet size.
+输入：来自同一协议会话的两个或多个十六进制数据包字符串。每个数据包会被逐字节解析和比较。分析器根据值范围和与数据包大小的相关性，为长度字段和 msgid 字段的字节偏移打分。
 
-Supported hex input formats: `01020304`, `01 02 03 04`, `01-02-03-04`,
-`0x01020304`.
+支持的 hex 输入格式：`01020304`、`01 02 03 04`、`01-02-03-04`、`0x01020304`。
 
-Options:
+选项：
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-e le/be` | Byte order (little-endian / big-endian) | `le` |
-| `--json` / `-j` | Output as JSON (machine-readable) | text output |
+| 选项 | 描述 | 默认值 |
+|------|------|--------|
+| `-e le/be` | 字节序（小端/大端） | `le` |
+| `--json` / `-j` | 输出为 JSON（机器可读） | 文本输出 |
 
-Examples:
+示例：
 
 ```bash
-# Analyze three packets with little-endian byte order
+# 使用小端字节序分析三个数据包
 bbpb analyze -e le 0008000108D00F0110011801 0006000108960110011800 000A00020A047465737410021801
 
-# Hex packets from stdin (one per line)
+# 从 stdin 输入 hex 数据包（每行一个）
 cat packets.txt | bbpb analyze -e le
 
-# JSON output for scripting
+# JSON 输出，便于脚本处理
 bbpb analyze --json -e le 00080001 00060001
 
-# Big-endian game protocol
+# 大端游戏协议
 bbpb analyze -e be 000100020304 000200050607
 ```

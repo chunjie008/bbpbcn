@@ -1,46 +1,32 @@
 # Blackbox Protobuf
 
-**Blackbox Protobuf now has an official package on PyPi under the name `bbpb`.
-The `blackboxprotobuf` package is an older fork**
+**Blackbox Protobuf 现在在 PyPi 上有官方包，名称为 `bbpb`。`blackboxprotobuf` 包是较旧的分支。**
 
-## Description
+## 描述
 
-Blackbox Protobuf is a set of tools for working with encoded Protocol Buffers
-(protobuf) without the matching protobuf definition.
+Blackbox Protobuf 是一套用于处理编码后的 Protocol Buffers（protobuf）的工具，无需匹配的 protobuf 定义文件。
 
-Protobuf is a binary serialization format from Google which can be used as a
-more efficient alternative to formats like JSON or XML. Developers can define
-the message format in a `.proto` file and use the protobuf compiler to
-generate message handlers in their language of choice. The protobuf encoding
-is binary, and unlike json/xml not human readable or easy to modify by hand.
-The format also takes advantage of both sides having the message definition and
-strips out much of the type information. This is good for efficiency, but
-increases the difficulty analyzing or modifying the network traffic.
+Protobuf 是 Google 推出的一种二进制序列化格式，可作为 JSON 或 XML 等格式的更高效替代方案。开发者可以在 `.proto` 文件中定义消息格式，并使用 protobuf 编译器生成所选语言的 message 处理代码。protobuf 编码是二进制的，不像 json/xml 那样可读或易于手动修改。该格式利用通信双方都拥有消息定义这一前提，省去了大量类型信息。这在提高效率的同时，也增加了分析或修改网络流量的难度。
 
-Blackbox protobuf is designed to allow working with protocol buffers without
-the message definition. It was originally implemented as a Burp extension for
-decoding and modifying messages during mobile pentests, but has also been used
-for reverse engineering and forensics tooling.
+Blackbox Protobuf 旨在允许在没有消息定义的情况下处理 protocol buffers。它最初是作为一个 Burp 扩展实现的，用于在移动端渗透测试中解码和修改消息，后来也被用于逆向工程和取证工具。
 
-## Tools
+## 工具
 
-This repository contains several interfaces for working with protocol buffers:
+本仓库包含多个用于处理 protocol buffers 的接口：
 
-- A jython burp extension in [burp/](https://github.com/nccgroup/blackboxprotobuf/tree/master/burp)
-- A python library that can be used in other applications in [lib/](https://github.com/nccgroup/blackboxprotobuf/tree/master/lib)
-- A python-based CLI embedded in the [library](https://github.com/nccgroup/blackboxprotobuf/tree/master/lib/CLI.md)
-- A mitmproxy addon in [mitmproxy](https://github.com/nccgroup/blackboxprotobuf/tree/master/mitmproxy)
+- 一个 jython burp 扩展，位于 [burp/](https://github.com/nccgroup/blackboxprotobuf/tree/master/burp)
+- 一个可被其他应用使用的 Python 库，位于 [lib/](https://github.com/nccgroup/blackboxprotobuf/tree/master/lib)
+- 一个基于 Python 的 CLI，嵌入在[库](https://github.com/nccgroup/blackboxprotobuf/tree/master/lib/CLI.md)中
+- 一个 mitmproxy 插件，位于 [mitmproxy](https://github.com/nccgroup/blackboxprotobuf/tree/master/mitmproxy)
 
-## Documentation
+## 文档
 
-In addition to the `README.md` for each tool, the following documentation is
-available:
+除了每个工具的 `README.md` 之外，还有以下文档：
 
-- [Type Definition Guide](docs/TypeDefs.md) - guide for editing typedefs to fix
-  types and improve readability
+- [类型定义指南](docs/TypeDefs.md) — 编辑 typedef 以修复类型和提升可读性的指南
 
-## Future Tools
+## 未来工具
 
-Some tooling that may be built on top of blackboxprotobuf in the future:
+未来可能基于 blackboxprotobuf 构建的一些工具：
 
-- protobuf type discovery tool
+- protobuf 类型发现工具
