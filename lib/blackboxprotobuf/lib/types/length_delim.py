@@ -15,6 +15,8 @@
 
 import binascii
 import copy
+import math
+import struct
 import sys
 import six
 import logging
@@ -43,6 +45,132 @@ if six.PY3:
         from blackboxprotobuf.lib.pytypes import Message
 
 logger = logging.getLogger(__name__)
+
+# 有效 field number 范围（protobuf 规范）
+# field_number 占用 tag 中的 29 位，低 3 位为 wire_type
+_MIN_FIELD_NUMBER = 1
+_MAX_FIELD_NUMBER = (1 << 29) - 1  # 536870911
+
+
+def _fingerprint_typedef(typedef):
+    # type: (TypeDef) -> str
+    """生成 TypeDef 的结构指纹，用于匿名 typedef 去重。
+
+    返回稳定的字符串，只依赖字段编号和类型结构，不依赖名称。
+    """
+    parts = []
+    for fid in sorted(typedef._fields.keys(), key=int):
+        fd = typedef._fields[fid]
+        field_type = fd._types.get("0", "?")
+        if isinstance(field_type, TypeDef):
+            nested_fp = _fingerprint_typedef(field_type)
+            parts.append("%s:message(%s)" % (fid, nested_fp))
+        else:
+            parts.append("%s:%s" % (fid, field_type))
+        if fd._seen_repeated:
+            parts[-1] += "[]"
+    return "|".join(parts)
+
+
+def _has_protobuf_structure(buf):
+    # type: (bytes) -> bool
+    """快速检测 length-delimited 缓冲区是否可能包含 protobuf 消息。
+
+    缓冲区格式是 [length_varint][data]（即 decode_lendelim_message 的输入）。
+    先解出长度，再检测 data 部分是否有合法 protobuf 结构。
+    """
+    if len(buf) < 2:
+        return False
+    try:
+        # 先读取长度前缀
+        data_length, pos = varint.decode_varint(buf, 0)
+        if data_length < 1 or pos + data_length > len(buf):
+            return False
+        # 对 data 部分做快速结构扫描
+        data_end = pos + data_length
+        # 尝试解码第一个标签
+        fn, wt, _ = decode_tag(buf, pos)
+        if fn < _MIN_FIELD_NUMBER or fn > _MAX_FIELD_NUMBER:
+            return False
+        if wt not in (wiretypes.VARINT, wiretypes.FIXED32, wiretypes.FIXED64,
+                       wiretypes.LENGTH_DELIMITED, wiretypes.START_GROUP):
+            return False
+        # 检查最短数据长度
+        if wt == wiretypes.FIXED32 and data_end - pos < 5:
+            return False
+        if wt == wiretypes.FIXED64 and data_end - pos < 9:
+            return False
+        return True
+    except (DecoderException, BlackboxProtobufException, IndexError, Exception):
+        return False
+
+
+def _refine_varint_type(values):
+    # type: (List[int]) -> Optional[str]
+    """分析已解码的 varint 值，推测更具体的子类型。
+
+    返回类型字符串 hint，None 表示保留当前默认。
+    """
+    if not values:
+        return None
+
+    # 检查是否为 bool-like（只有 0/1）
+    if all(v in (0, 1) for v in values):
+        return "uint"
+
+    # 检查是否全部非负 → 更可能是 uint
+    if all(v >= 0 for v in values):
+        return "uint"
+
+    # 有负值，保留默认 "int"
+    return None
+
+
+def _refine_fixed32_type(values):
+    # type: (List[int]) -> Optional[str]
+    """分析 fixed32 解码值，推测 float / fixed32 / sfixed32。"""
+    if not values:
+        return None
+
+    float_count = 0
+    for v in values:
+        try:
+            f = struct.unpack('<f', struct.pack('<I', v & 0xFFFFFFFF))[0]
+            if not math.isnan(f) and not math.isinf(f):
+                if f == 0.0 or (1e-45 < abs(f) < 1e38):
+                    float_count += 1
+            else:
+                # NaN/inf 也是有效的 float
+                float_count += 1
+        except (struct.error, OverflowError):
+            pass
+
+    if float_count >= len(values) * 0.7:
+        return "float"
+    return None
+
+
+def _refine_fixed64_type(values):
+    # type: (List[int]) -> Optional[str]
+    """分析 fixed64 解码值，推测 double / fixed64 / sfixed64。"""
+    if not values:
+        return None
+
+    double_count = 0
+    for v in values:
+        try:
+            d = struct.unpack('<d', struct.pack('<Q', v & 0xFFFFFFFFFFFFFFFF))[0]
+            if not math.isnan(d) and not math.isinf(d):
+                if d == 0.0 or (1e-45 < abs(d) < 1e308):
+                    double_count += 1
+            else:
+                double_count += 1
+        except (struct.error, OverflowError):
+            pass
+
+    if double_count >= len(values) * 0.7:
+        return "double"
+    return None
 
 
 def encode_string(value):
@@ -367,11 +495,24 @@ def _decode_standard_field(wire_type, buffers, fielddef, config, field_path):
 
         field_outputs = [default_decoder(buf, 0)[0] for buf in buffers]
 
+    # 类型细化：根据已解码的值推测更精确的类型
+    refined_type_hint = None  # type: Optional[str]
+    if field_alt_type_id is None and wire_type == wiretypes.VARINT:
+        refined_type_hint = _refine_varint_type(field_outputs)
+    elif field_alt_type_id is None and wire_type == wiretypes.FIXED32:
+        refined_type_hint = _refine_fixed32_type(field_outputs)
+    elif field_alt_type_id is None and wire_type == wiretypes.FIXED64:
+        refined_type_hint = _refine_fixed64_type(field_outputs)
+
     mut_fielddef = fielddef.make_mutable()
     if field_alt_type_id is None:
         field_alt_type_id = mut_fielddef.next_alt_type_id()
 
     mut_fielddef.set_type(field_alt_type_id, field_type)
+
+    # 如果检测到更精确的类型，存储为 type_hint（不改变实际解码类型）
+    if refined_type_hint:
+        mut_fielddef.set_type_hint(field_alt_type_id, refined_type_hint)
 
     if field_outputs is None:
         raise DecoderException(
@@ -423,6 +564,14 @@ def _group_by_number(buf, pos, end, path):
         # 读取一个字段
         field_number, wire_type, pos = decode_tag(buf, pos)
 
+        # 验证 field number 是否合法
+        if field_number < _MIN_FIELD_NUMBER or field_number > _MAX_FIELD_NUMBER:
+            raise DecoderException(
+                "Invalid field number %d (must be %d..%d)"
+                % (field_number, _MIN_FIELD_NUMBER, _MAX_FIELD_NUMBER),
+                path=path[:] + [six.ensure_text(str(field_number))],
+            )
+
         # 我们希望字段编号在所有地方都作为字符串
         field_id = six.ensure_text(str(field_number))
 
@@ -450,11 +599,42 @@ def _group_by_number(buf, pos, end, path):
             # 同时加上长度标签本身的长度
             bytes_length, new_pos = varint.decode_varint(buf, pos)
             length = bytes_length + (new_pos - pos)
-        elif wire_type in [
-            wiretypes.START_GROUP,
-            wiretypes.END_GROUP,
-        ]:
-            raise DecoderException("GROUP wire types not supported", path=field_path)
+        elif wire_type == wiretypes.START_GROUP:
+            # 跳过 group 内容直到匹配的 END_GROUP
+            depth = 1
+            while depth > 0:
+                if pos >= end:
+                    raise DecoderException(
+                        "Unclosed group for field %d" % field_number,
+                        path=field_path,
+                    )
+                inner_fn, inner_wt, pos = decode_tag(buf, pos)
+                if inner_wt == wiretypes.START_GROUP and inner_fn == field_number:
+                    depth += 1
+                elif inner_wt == wiretypes.END_GROUP and inner_fn == field_number:
+                    depth -= 1
+                if depth > 0:
+                    # Skip the value portion of inner tags
+                    if inner_wt == wiretypes.VARINT:
+                        _, pos = varint.decode_uvarint(buf, pos)
+                    elif inner_wt == wiretypes.FIXED32:
+                        pos += 4
+                    elif inner_wt == wiretypes.FIXED64:
+                        pos += 8
+                    elif inner_wt == wiretypes.LENGTH_DELIMITED:
+                        bl, p2 = varint.decode_varint(buf, pos)
+                        pos = p2 + bl
+                    elif inner_wt in (wiretypes.START_GROUP, wiretypes.END_GROUP):
+                        # Tag already consumed; processing done above
+                        pass
+            # 不将 group 添加到 output_map，继续循环
+            continue
+        elif wire_type == wiretypes.END_GROUP:
+            # 孤立的 END_GROUP — 在 message 顶层不应出现
+            raise DecoderException(
+                "Unexpected END_GROUP tag for field %d" % field_number,
+                path=field_path,
+            )
         else:
             raise DecoderException(
                 "Got unknown wire type: %d" % wire_type, path=field_path
@@ -499,13 +679,30 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
 
     message_output = {}  # type: Message
 
-    # TODO 潜在性能改进：使用 {} 进行第一遍扫描，或按编号分组，使用结果验证是否为有效的 protobuf 并快速将 wire_types 与 typedefs 匹配
+    # 匿名 typedef 指纹缓存，用于去重
+    _anon_fingerprint_cache = {}  # type: Dict[str, str]
+
     try:
         outputs_map = {}  # type: Dict[str, Any]
         field_order = []  # type: List[str]
 
         next_alt_type_id = int(fielddef.next_alt_type_id())
         field_types = fielddef.resolve_types(config, path)
+
+        # 预检：如果配置启用，先快速检查每个 buffer 是否像 protobuf
+        if getattr(config, 'enable_message_precheck', True):
+            non_protobuf_buffers = [
+                b for b in buffers if not _has_protobuf_structure(b)
+            ]
+            if len(non_protobuf_buffers) == len(buffers):
+                # 所有 buffer 都不像 protobuf，直接跳到 string/bytes 回退
+                logger.debug(
+                    "Field (%s): all buffers failed protobuf structure check, skipping message decode",
+                    path,
+                )
+                raise DecoderException(
+                    "No buffers look like protobuf messages"
+                )
 
         # 我们不希望在这个循环内发生任何可变更改，我们希望
         # 如果失败，所有内容都能回滚
@@ -539,11 +736,18 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
             # 如果上面没有找到类型，则尝试匿名类型
             # 如果这仍然失败，则对所有类型回退到 string 和 bytes
             if output is None:
+                # 匿名 typedef 指纹去重：相同结构的匿名消息共用同一个 alt_type_id
                 output, output_typedef, new_field_order, _ = decode_lendelim_message(
                     buf, config, None
                 )
-                output_typedef_num = six.ensure_text(str(next_alt_type_id))
-                next_alt_type_id += 1
+                fp = _fingerprint_typedef(output_typedef)
+                cached = _anon_fingerprint_cache.get(fp)
+                if cached is not None:
+                    output_typedef_num = cached
+                else:
+                    output_typedef_num = six.ensure_text(str(next_alt_type_id))
+                    _anon_fingerprint_cache[fp] = output_typedef_num
+                    next_alt_type_id += 1
 
             if output_typedef is None or output_typedef_num is None:
                 raise DecoderException(
@@ -587,7 +791,13 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
     # 作为消息解码失败，尝试字符串，然后是配置的二进制类型
     # 默认情况下，default_binary_type 将与 bytes 冗余，但我们希望
     # 如果 default_binary_type 因任何原因失败，回退到 bytes
-    for target_type in ["string", config.default_binary_type, "bytes"]:
+    # bytes_hex 作为补充尝试，在 string 和 bytes 都不行时提供 hex 表示
+    binary_fallbacks = ["string", config.default_binary_type]
+    if "bytes_hex" not in binary_fallbacks:
+        binary_fallbacks.append("bytes_hex")
+    if "bytes" not in binary_fallbacks:
+        binary_fallbacks.append("bytes")
+    for target_type in binary_fallbacks:
         try:
             outputs = []
             decoder = blackboxprotobuf.lib.types.DECODERS[target_type]

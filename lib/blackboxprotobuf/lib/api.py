@@ -348,6 +348,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
             "alt_typedefs",
             "example_value_ignored",
             "seen_repeated",
+            "type_hints",
         ]
         for key, value in field_typedef.items():
             # 检查字段键是否为有效值
@@ -674,6 +675,7 @@ def sort_typedef(typedef):
     TYPEDEF_KEY_ORDER = [
         "name",
         "type",
+        "type_hints",
         "message_type_name",
         "example_value_ignored",
         "field_order",

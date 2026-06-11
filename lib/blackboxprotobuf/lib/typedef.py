@@ -76,6 +76,17 @@ class TypeDef(object):
             return field_id, self._fields[field_id]
         return None
 
+    def get_type_hints_map(self):
+        # type: (TypeDef) -> Dict[str, Dict[str, str]]
+        """获取整个 TypeDef 中所有字段的类型 hints。
+        返回 { field_number: { alt_type_id: hint } }
+        """
+        result = {}
+        for field_id, fielddef in self._fields.items():
+            if fielddef._type_hints:
+                result[field_id] = dict(fielddef._type_hints)
+        return result
+
 
 class MutableTypeDef(TypeDef):
     def set_fielddef(self, field_number, fielddef):
@@ -98,6 +109,8 @@ class FieldDef(object):
         self._example_value = None  # type: Any
         self._seen_repeated = False  # type: bool
         self._field_order = None  # type: Optional[List[str]]
+        # 类型建议 hint：由解码启发式生成，不改变实际解码行为
+        self._type_hints = {}  # type: Dict[str, str]
 
     @staticmethod
     def from_dict(fielddef_dict, field_id):
@@ -137,6 +150,13 @@ class FieldDef(object):
         if "field_order" in fielddef_dict:
             fielddef._field_order = fielddef_dict["field_order"]
 
+        if "type_hints" in fielddef_dict:
+            type_hints_dict = fielddef_dict["type_hints"]
+            if isinstance(type_hints_dict, dict):
+                fielddef._type_hints = {
+                    str(k): str(v) for k, v in type_hints_dict.items()
+                }
+
         return fielddef
 
     def to_dict(self):
@@ -152,6 +172,8 @@ class FieldDef(object):
             fielddef_dict["seen_repeated"] = self._seen_repeated
         if self._field_order:
             fielddef_dict["field_order"] = self._field_order
+        if self._type_hints:
+            fielddef_dict["type_hints"] = dict(self._type_hints)
 
         field_type = self._types.get("0")
         if isinstance(field_type, TypeDef):
@@ -182,6 +204,7 @@ class FieldDef(object):
         mutable._example_value = self._example_value
         mutable._seen_repeated = self._seen_repeated
         mutable._field_order = self._field_order
+        mutable._type_hints = self._type_hints.copy()
         return mutable
 
     def lookup_field_type(self, key, config, field_path):
@@ -240,6 +263,17 @@ class FieldDef(object):
         # type: (FieldDef) -> bool
         return self._seen_repeated
 
+    @property
+    def type_hints(self):
+        # type: (FieldDef) -> Dict[str, str]
+        """返回字段的类型 hint 字典（替代编号 → 建议类型）。"""
+        return self._type_hints
+
+    def get_type_hint_for_alt(self, alt_type_id):
+        # type: (FieldDef, str) -> Optional[str]
+        """获取指定替代类型的类型 hint。"""
+        return self._type_hints.get(alt_type_id)
+
     def resolve_message_type_name(self, config, field_path):
         # type: (FieldDef, Config, List[str]) -> TypeDef
         if self._message_type_name not in config.known_types:
@@ -280,3 +314,13 @@ class MutableFieldDef(FieldDef):
         alt_type_id = self.next_alt_type_id()
         self.set_type(alt_type_id, field_type)
         return alt_type_id
+
+    def set_type_hint(self, alt_type_id, hint):
+        # type: (MutableFieldDef, str, str) -> None
+        """设置该字段替代类型编号对应的建议类型 hint。"""
+        self._type_hints[alt_type_id] = hint
+
+    def get_type_hints(self):
+        # type: (MutableFieldDef) -> Dict[str, str]
+        """获取所有替代类型的建议类型 hint。"""
+        return self._type_hints

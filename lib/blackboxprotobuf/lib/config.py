@@ -46,6 +46,11 @@ class Config:
         # 打乱恰好是有效 protobuf 的数据
         self.preserve_field_order = True
 
+        # 是否启用 LENGTH_DELIMITED 字段的 protobuf 结构预检
+        # 启用时，在尝试完整 message 解码前先快速检查数据是否像 protobuf，
+        # 不像的直接跳到 string/bytes 回退，可提升非 protobuf 数据的解码性能
+        self.enable_message_precheck = True
+
     def get_default_type(self, wiretype):
         # type: (Config, int) -> str
         default_type = self.default_types.get(wiretype, None)
