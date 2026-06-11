@@ -16,9 +16,9 @@ import hypothesis.strategies as st
 import strategies
 import pytest
 
-from bbpb_cn.lib import payloads
-from bbpb_cn.lib.payloads import grpc, gzip
-from bbpb_cn.lib.exceptions import bbpb_cnException
+from bbpbcn.lib import payloads
+from bbpbcn.lib.payloads import grpc, gzip
+from bbpbcn.lib.exceptions import bbpbcnException
 
 
 def test_grpc():
@@ -28,22 +28,22 @@ def test_grpc():
     assert encoding == "grpc"
 
     # 压缩标志
-    with pytest.raises(bbpb_cnException):
+    with pytest.raises(bbpbcnException):
         message = bytearray([0x01, 0x00, 0x00, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
     # 未知标志
-    with pytest.raises(bbpb_cnException):
+    with pytest.raises(bbpbcnException):
         message = bytearray([0x11, 0x00, 0x00, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
     # 长度错误
-    with pytest.raises(bbpb_cnException):
+    with pytest.raises(bbpbcnException):
         message = bytearray([0x00, 0x00, 0x01, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
     # 长度错误
-    with pytest.raises(bbpb_cnException):
+    with pytest.raises(bbpbcnException):
         message = bytearray([0x00, 0x00, 0x00, 0x00, 0x01, 0xAA, 0xBB])
         data = grpc.decode_grpc(message)
 

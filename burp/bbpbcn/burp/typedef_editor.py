@@ -17,7 +17,7 @@
 
 import traceback
 import json
-import bbpb_cn
+import bbpbcn
 from java.awt import Component, Dimension, Frame
 from java.awt.event import ActionListener, WindowEvent
 from javax.swing import (
@@ -107,7 +107,7 @@ class TypeEditorWindow(JDialog):
                 self.exitTypeWindow()
                 return
 
-            bbpb_cn.validate_typedef(message_type, self._original_typedef)
+            bbpbcn.validate_typedef(message_type, self._original_typedef)
 
             self._type_callback(message_type, self._type_source)
             self.exitTypeWindow()
@@ -135,7 +135,7 @@ class TypeEditorWindow(JDialog):
             return
 
         try:
-            bbpb_cn.validate_typedef(message_type, self._original_typedef)
+            bbpbcn.validate_typedef(message_type, self._original_typedef)
         except Exception as exc:
             self._burp_callbacks.printError(traceback.format_exc())
             JOptionPane.showMessageDialog(self, "Error validating type: " + str(exc))

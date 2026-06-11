@@ -14,7 +14,7 @@
 """ payloads 模块旨在处理 protobuf 数据的不同编码方式，
     例如压缩和 grpc 头部。 """
 
-from bbpb_cn.lib.exceptions import bbpb_cnException
+from bbpbcn.lib.exceptions import bbpbcnException
 from . import gzip, grpc
 
 import six
@@ -61,7 +61,7 @@ def decode_payload(buf, decoder):
     elif decoder == "gzip":
         return gzip.decode_gzip(buf)
     else:
-        raise bbpb_cnException("Unknown decoder: " + decoder)
+        raise bbpbcnException("Unknown decoder: " + decoder)
 
 
 # 按名称编码，应传入 decode 函数的结果
@@ -73,7 +73,7 @@ def encode_payload(buf, encoder):
     encoder = encoder.lower()
     if encoder == "none":
         if isinstance(buf, list):
-            raise bbpb_cnException(
+            raise bbpbcnException(
                 "Cannot encode multiple buffers with none/missing encoding"
             )
         return buf
@@ -82,4 +82,4 @@ def encode_payload(buf, encoder):
     elif encoder == "gzip":
         return gzip.encode_gzip(buf)
     else:
-        raise bbpb_cnException("Unknown encoder: " + encoder)
+        raise bbpbcnException("Unknown encoder: " + encoder)

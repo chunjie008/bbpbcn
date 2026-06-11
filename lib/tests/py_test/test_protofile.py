@@ -28,11 +28,11 @@ from hypothesis import given, assume, note, settings, HealthCheck
 import hypothesis.strategies as st
 import google.protobuf.json_format
 import strategies
-import bbpb_cn.lib
-import bbpb_cn.lib.protofile as protofile
-from bbpb_cn.lib.types import length_delim
-from bbpb_cn.lib.config import Config
-from bbpb_cn.lib.typedef import TypeDef
+import bbpbcn.lib
+import bbpbcn.lib.protofile as protofile
+from bbpbcn.lib.types import length_delim
+from bbpbcn.lib.config import Config
+from bbpbcn.lib.typedef import TypeDef
 
 
 to_suppress = []
@@ -96,7 +96,7 @@ def test_proto_export_inverse(tmp_path, x, name):
         config.known_types.update(new_typedef_map)
         # 验证
         for name, typedef in new_typedef_map.items():
-            bbpb_cn.validate_typedef(typedef, config=config)
+            bbpbcn.validate_typedef(typedef, config=config)
 
         def _check_field_types(typedef1, typedef2):
             for field_num in typedef1.keys():
@@ -176,7 +176,7 @@ def test_proto_import_examples():
         config.known_types = typedef_map_out
         for name, typedef in typedef_map_out.items():
             logging.debug("已知消息: %s" % config.known_types)
-            bbpb_cn.lib.validate_typedef(typedef, config=config)
+            bbpbcn.lib.validate_typedef(typedef, config=config)
 
 
 @given(

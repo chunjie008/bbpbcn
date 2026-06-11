@@ -1,6 +1,6 @@
-﻿"""`bbpb_cn.lib` 模块提供用于解码和编码二进制 protobuf 消息的 API。
+﻿"""`bbpbcn.lib` 模块提供用于解码和编码二进制 protobuf 消息的 API。
 
-此模块重新导出 `bbpb_cn.lib.api` 中定义的函数，
+此模块重新导出 `bbpbcn.lib.api` 中定义的函数，
 这些函数提供了模块的高级接口和便捷函数。
 """
 

@@ -18,7 +18,7 @@ import logging
 
 
 try:
-    import bbpb_cn
+    import bbpbcn
 except ModuleNotFoundError:
     # 两个 abspath 是因为 dirname 如果只运行 bbpb.py 会返回空字符串
     _BASE_DIR = os.path.abspath(
@@ -28,10 +28,10 @@ except ModuleNotFoundError:
     sys.path.insert(0, _BASE_DIR + "/lib/")
     sys.path.insert(0, _BASE_DIR + "/mitmproxy/")
     sys.path.insert(0, _BASE_DIR + "/mitmproxy/deps/six/")
-    import bbpb_cn
+    import bbpbcn
 
-from bbpb_cn.lib import payloads
-from bbpb_cn.lib.exceptions import bbpb_cnException
+from bbpbcn.lib import payloads
+from bbpbcn.lib.exceptions import bbpbcnException
 
 import json
 from collections.abc import Sequence
@@ -51,11 +51,11 @@ from mitmproxy import (
 from mitmproxy.tools.console import overlay, signals, keymap
 
 
-class bbpb_cnAddon:
+class bbpbcnAddon:
     def __init__(self):
-        self.view = bbpb_cnView(self)
+        self.view = bbpbcnView(self)
 
-        self.bbpb_config = bbpb_cn.lib.config.Config()
+        self.bbpb_config = bbpbcn.lib.config.Config()
         self.typedef_lookup = {}
         self.project_file = None
 
@@ -144,7 +144,7 @@ class bbpb_cnAddon:
         )
 
         def message_callback(edited_json: str) -> None:
-            protobuf_data = bbpb_cn.protobuf_from_json(
+            protobuf_data = bbpbcn.protobuf_from_json(
                 edited_json, typedef_out
             )
             data = payloads.encode_payload(protobuf_data, encoding_alg)
@@ -164,11 +164,11 @@ class bbpb_cnAddon:
 
         def typedef_callback(typedef_json: str) -> None:
             new_typedef = json.loads(typedef_json)
-            bbpb_cn.validate_typedef(
+            bbpbcn.validate_typedef(
                 new_typedef, typedef
             )  # 根据旧 typedef 验证新 typedef
 
-            bbpb_cn.lib.api._strip_typedef_annotations(new_typedef)
+            bbpbcn.lib.api._strip_typedef_annotations(new_typedef)
             known_type = self.typedef_lookup.get(message_hash)
             if isinstance(known_type, str):
                 # 这是一个命名 typedef，编辑已知的 typedef 而不是保存的值
@@ -215,7 +215,7 @@ class bbpb_cnAddon:
                 _decode_protobuf(
                     message.content, typename, self.bbpb_config, fallback=False
                 )
-            except bbpb_cnException as ex:
+            except bbpbcnException as ex:
                 raise exceptions.CommandError(
                     f"将类型名称 {typename} 应用于部分 {flow_part} 时出错: {ex}"
                 )
@@ -260,7 +260,7 @@ class bbpb_cnAddon:
                     _decode_protobuf(
                         message.content, typename, self.bbpb_config, fallback=False
                     )
-                except bbpb_cnException as ex:
+                except bbpbcnException as ex:
                     raise exceptions.CommandError(
                         f"将类型名称 {typename} 应用于部分 {flow_part} 时出错: {ex}"
                     )
@@ -277,7 +277,7 @@ class bbpb_cnAddon:
             raise exceptions.CommandError(f"错误：类型名称 {typename} 无效。")
         typedef, message_hash = self._resolve_type(flow_part)
 
-        bbpb_cn.lib.api._strip_typedef_annotations(typedef)
+        bbpbcn.lib.api._strip_typedef_annotations(typedef)
         self.typedef_lookup[message_hash] = typename
         self.bbpb_config.known_types[typename] = typedef
         self._save_project_file()
@@ -339,7 +339,7 @@ class bbpb_cnAddon:
                         message.content, typedef, self.bbpb_config, fallback=False
                     )
                     message_jsons.append(message_json)
-            except bbpb_cnException:
+            except bbpbcnException:
                 typedef = {}
                 message_jsons = []
                 for message in messages:
@@ -417,10 +417,10 @@ class bbpb_cnAddon:
         self._save_project_file(project_file)
 
 
-class bbpb_cnView(contentviews.View):
+class bbpbcnView(contentviews.View):
     name = "Blackbox Protobuf"
 
-    def __init__(self, addon: bbpb_cnAddon):
+    def __init__(self, addon: bbpbcnAddon):
         self.addon = addon
 
     def __call__(
@@ -520,25 +520,25 @@ def _decode_protobuf(data, typedef, config, fallback=True):
         for decoder in decoders:
             try:
                 protobuf_data, encoding_alg = decoder(data)
-            except bbpb_cnException:
+            except bbpbcnException:
                 continue
 
             try:
-                message, typedef_out = bbpb_cn.lib.protobuf_to_json(
+                message, typedef_out = bbpbcn.lib.protobuf_to_json(
                     protobuf_data, typedef, config=config
                 )
 
                 return message, typedef_out, encoding_alg
-            except bbpb_cnException as exc:
+            except bbpbcnException as exc:
                 if encoding_alg == "none":
                     raise exc
                 continue
-    except bbpb_cnException as exc:
+    except bbpbcnException as exc:
         if typedef and fallback:
             return _decode_protobuf(data, {}, config)
         else:
             raise exc
-    raise bbpb_cnException(
+    raise bbpbcnException(
         '解码 protobuf 失败，但未捕获 "none" 解码器。这种情况不应发生'
     )
 
@@ -629,4 +629,4 @@ class RecursiveChooser(overlay.Chooser):
             return super().keypress(size, key)
 
 
-addons = [bbpb_cnAddon()]
+addons = [bbpbcnAddon()]

@@ -19,16 +19,16 @@ import logging
 import re
 import six
 
-from bbpb_cn.lib.exceptions import TypedefException, ProtofileException
-import bbpb_cn.lib.api
+from bbpbcn.lib.exceptions import TypedefException, ProtofileException
+import bbpbcn.lib.api
 
 if six.PY3:
     import typing
 
     if typing.TYPE_CHECKING:
-        from bbpb_cn.lib.config import Config
+        from bbpbcn.lib.config import Config
         from typing import Any, TextIO, Tuple, Dict, Optional, List
-        from bbpb_cn.lib.pytypes import TypeDefDict, FieldDefDict
+        from bbpbcn.lib.pytypes import TypeDefDict, FieldDefDict
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ def _print_message(message_name, typedef, output_file, depth=0):
         raise TypedefException("Message name: %s is not valid" % message_name)
 
     # 对 typedef 排序以获得更好的输出效果
-    typedef = bbpb_cn.lib.api.sort_typedef(typedef)
+    typedef = bbpbcn.lib.api.sort_typedef(typedef)
 
     message_name = message_name.strip()
     output_file.write(six.u("\n"))

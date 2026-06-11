@@ -24,7 +24,7 @@ sys.path.insert(0, _BASE_DIR + "/lib/")
 sys.path.insert(0, _BASE_DIR + "/burp/deps/six/")
 sys.path.insert(0, _BASE_DIR + "/burp/deps/protobuf/python/")
 
-# extend_path 会在 sys.path 中查找其他 'bbpb_cn' 模块并将它们添加到 __path__
+# extend_path 会在 sys.path 中查找其他 'bbpbcn' 模块并将它们添加到 __path__
 from pkgutil import extend_path
 
 __path__ = extend_path(__path__, __name__)
@@ -48,5 +48,5 @@ def fix_protobuf():
 
 fix_protobuf()
 
-# 镜像 lib 中的操作，以便我们可以使用 bbpb_cn.<function>
-from bbpb_cn.lib.api import *
+# 镜像 lib 中的操作，以便我们可以使用 bbpbcn.<function>
+from bbpbcn.lib.api import *

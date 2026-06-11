@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, "../")
 
-import bbpb_cn as bbp
+import bbpbcn as bbp
 
 typedef = {}
 

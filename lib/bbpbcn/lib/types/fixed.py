@@ -16,7 +16,7 @@
 import struct
 import binascii
 import six
-from bbpb_cn.lib.exceptions import DecoderException, EncoderException
+from bbpbcn.lib.exceptions import DecoderException, EncoderException
 
 import six
 

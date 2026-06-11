@@ -13,7 +13,7 @@
 
 import zlib
 
-from bbpb_cn.lib.exceptions import bbpb_cnException
+from bbpbcn.lib.exceptions import bbpbcnException
 
 import six
 
@@ -32,7 +32,7 @@ def decode_gzip(buf):
         decompressor = zlib.decompressobj(31)
         return decompressor.decompress(buf), "gzip"
     else:
-        raise bbpb_cnException(
+        raise bbpbcnException(
             "Cannot decode as gzip: magic bytes don't match"
         )
 
@@ -40,7 +40,7 @@ def decode_gzip(buf):
 def encode_gzip(buf):
     # type: (bytes | list[bytes]) -> bytes
     if isinstance(buf, list):
-        raise bbpb_cnException(
+        raise bbpbcnException(
             "Cannot encode as gzip: multiple buffers are not supported"
         )
     compressor = zlib.compressobj(-1, zlib.DEFLATED, 31)

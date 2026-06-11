@@ -20,7 +20,7 @@ import base64
 import json
 import six
 
-import bbpb_cn
+import bbpbcn
 
 
 warnings.filterwarnings(
@@ -63,24 +63,24 @@ testMessage_typedef = {
 }
 
 
-# 测试 bbpb_cn 解码
+# 测试 bbpbcn 解码
 @given(x=strategies.gen_message_data(testMessage_typedef))
 def test_decode(x):
     message = Test_pb2.TestMessage()
     for key, value in x.items():
         setattr(message, key, value)
     encoded = message.SerializeToString()
-    decoded, typedef = bbpb_cn.decode_message(encoded, testMessage_typedef)
-    bbpb_cn.validate_typedef(typedef)
+    decoded, typedef = bbpbcn.decode_message(encoded, testMessage_typedef)
+    bbpbcn.validate_typedef(typedef)
     hypothesis.note("解码: %r" % decoded)
     for key in decoded.keys():
         assert x[key] == decoded[key]
 
 
-# 测试 bbpb_cn 编码
+# 测试 bbpbcn 编码
 @given(x=strategies.gen_message_data(testMessage_typedef))
 def test_encode(x):
-    encoded = bbpb_cn.encode_message(x, testMessage_typedef)
+    encoded = bbpbcn.encode_message(x, testMessage_typedef)
     message = Test_pb2.TestMessage()
     message.ParseFromString(encoded)
 
@@ -100,8 +100,8 @@ def test_modify(x, modify_num):
     for key, value in x.items():
         setattr(message, key, value)
     encoded = message.SerializeToString()
-    decoded, typedef = bbpb_cn.decode_message(encoded, testMessage_typedef)
-    bbpb_cn.validate_typedef(typedef)
+    decoded, typedef = bbpbcn.decode_message(encoded, testMessage_typedef)
+    bbpbcn.validate_typedef(typedef)
 
     # 排除 protobuf 默认值为 0 的情况
     hypothesis.assume(modify_key in decoded)
@@ -123,7 +123,7 @@ def test_modify(x, modify_num):
     decoded[modify_key] = mod_func(decoded[modify_key])
     x[modify_key] = mod_func(x[modify_key])
 
-    encoded = bbpb_cn.encode_message(decoded, testMessage_typedef)
+    encoded = bbpbcn.encode_message(decoded, testMessage_typedef)
     message = Test_pb2.TestMessage()
     message.ParseFromString(encoded)
 
@@ -144,10 +144,10 @@ def test_decode_json(x):
         setattr(message, key, value)
     encoded = message.SerializeToString()
 
-    decoded_json, typedef_json = bbpb_cn.protobuf_to_json(
+    decoded_json, typedef_json = bbpbcn.protobuf_to_json(
         encoded, testMessage_typedef
     )
-    bbpb_cn.validate_typedef(typedef_json)
+    bbpbcn.validate_typedef(typedef_json)
     hypothesis.note("编码 JSON:")
     hypothesis.note(decoded_json)
     decoded = json.loads(decoded_json)
@@ -173,11 +173,11 @@ def test_encode_json(x):
     hypothesis.note(json_str)
     hypothesis.note(json.loads(json_str))
 
-    encoded = bbpb_cn.protobuf_from_json(json_str, testMessage_typedef)
+    encoded = bbpbcn.protobuf_from_json(json_str, testMessage_typedef)
     assert not isinstance(encoded, list)
     hypothesis.note("BBP 解码:")
 
-    test_decode, _ = bbpb_cn.decode_message(encoded, testMessage_typedef)
+    test_decode, _ = bbpbcn.decode_message(encoded, testMessage_typedef)
     hypothesis.note(test_decode)
 
     message = Test_pb2.TestMessage()
@@ -205,10 +205,10 @@ def test_modify_json(x, modify_num):
     for key, value in x.items():
         setattr(message, key, value)
     encoded = message.SerializeToString()
-    decoded_json, typedef = bbpb_cn.protobuf_to_json(
+    decoded_json, typedef = bbpbcn.protobuf_to_json(
         encoded, testMessage_typedef
     )
-    bbpb_cn.validate_typedef(typedef)
+    bbpbcn.validate_typedef(typedef)
     decoded = json.loads(decoded_json)
 
     # 排除 protobuf 默认值为 0 的情况
@@ -231,7 +231,7 @@ def test_modify_json(x, modify_num):
     decoded[modify_key] = mod_func(decoded[modify_key])
     x[modify_key] = mod_func(x[modify_key])
 
-    encoded = bbpb_cn.protobuf_from_json(
+    encoded = bbpbcn.protobuf_from_json(
         json.dumps(decoded), testMessage_typedef
     )
     assert not isinstance(encoded, list)

@@ -1,15 +1,15 @@
 ﻿[tool.poetry]
-name = "bbpb-cn"
+name = "bbpbcn"
 version = "1.4.2"
 description = "Forked from blackboxprotobuf. Enhanced protobuf blind decode with better type inference (nesting, VARINT, Fixed heuristic). Chinese comments & docs."
 authors = ["Contributors"]
 license = "MIT"
-repository = "https://github.com/chunjie008/bbpb_cn"
+repository = "https://github.com/chunjie008/bbpbcn"
 readme = "README.md"
 keywords = ["protobuf"]
 exclude = ["./tests"]
 packages = [
-    { include = "bbpb_cn" }
+    { include = "bbpbcn" }
 ]
 
 [tool.poetry.dependencies]
@@ -27,7 +27,7 @@ protobuf = "^3.20"
 mypy = "^1.10.0"
 
 [tool.poetry.scripts]
-bbpb-cn = "bbpb_cn.__main__:main"
+bbpbcn = "bbpbcn.__main__:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -19,10 +19,10 @@ import six
 import copy
 import binascii
 
-from bbpb_cn.lib.config import Config
-from bbpb_cn.lib.types import length_delim
-from bbpb_cn.lib.types import type_maps
-from bbpb_cn.lib.typedef import TypeDef, FieldDef
+from bbpbcn.lib.config import Config
+from bbpbcn.lib.types import length_delim
+from bbpbcn.lib.types import type_maps
+from bbpbcn.lib.typedef import TypeDef, FieldDef
 
 if six.PY2:
     string_types = (unicode, str)

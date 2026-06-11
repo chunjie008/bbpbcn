@@ -14,7 +14,7 @@
 from .types import type_maps
 
 import six
-from bbpb_cn.lib.exceptions import (
+from bbpbcn.lib.exceptions import (
     DecoderException,
 )
 
@@ -29,7 +29,7 @@ if six.PY3:
 class Config:
     def __init__(self):
         # type: (Config) -> None
-        # 消息类型名称到 typedef 的映射，之前存储在 `bbpb_cn.known_messages`
+        # 消息类型名称到 typedef 的映射，之前存储在 `bbpbcn.known_messages`
         self.known_types = {}  # type: Dict[str, TypeDefDict]
 
         # 非消息或字符串的"bytes"类对象的默认类型

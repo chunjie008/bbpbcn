@@ -20,12 +20,12 @@ import json
 import six
 import binascii
 
-from bbpb_cn.lib.config import Config
-from bbpb_cn.lib.types import length_delim
-from bbpb_cn.lib.types import type_maps
-from bbpb_cn.lib.typedef import TypeDef
-from bbpb_cn.lib.payloads import grpc, gzip
-import bbpb_cn
+from bbpbcn.lib.config import Config
+from bbpbcn.lib.types import length_delim
+from bbpbcn.lib.types import type_maps
+from bbpbcn.lib.typedef import TypeDef
+from bbpbcn.lib.payloads import grpc, gzip
+import bbpbcn
 
 
 @given(x=strategies.gen_message())
@@ -33,18 +33,18 @@ def test_message_json_inverse(x):
     config = Config()
     typedef, message = x
     encoded = length_delim.encode_message(message, config, TypeDef.from_dict(typedef))
-    decoded_json, typedef_out = bbpb_cn.protobuf_to_json(
+    decoded_json, typedef_out = bbpbcn.protobuf_to_json(
         encoded, config=config, message_type=typedef
     )
-    bbpb_cn.validate_typedef(typedef_out)
-    encoded_json = bbpb_cn.protobuf_from_json(
+    bbpbcn.validate_typedef(typedef_out)
+    encoded_json = bbpbcn.protobuf_from_json(
         decoded_json, config=config, message_type=typedef_out
     )
     assert not isinstance(encoded_json, list)
-    decoded, typedef_out = bbpb_cn.decode_message(
+    decoded, typedef_out = bbpbcn.decode_message(
         encoded_json, config=config, message_type=typedef
     )
-    bbpb_cn.validate_typedef(typedef_out)
+    bbpbcn.validate_typedef(typedef_out)
     assert isinstance(encoded, bytearray)
     assert isinstance(decoded, dict)
     assert message == decoded
@@ -57,12 +57,12 @@ def test_multiple_encoding(x, n):
     encoded = length_delim.encode_message(message, config, TypeDef.from_dict(typedef))
 
     bufs = [encoded] * n
-    message_json, typedef_out = bbpb_cn.protobuf_to_json(bufs, typedef, config)
+    message_json, typedef_out = bbpbcn.protobuf_to_json(bufs, typedef, config)
     messages = json.loads(message_json)
     assert isinstance(messages, list)
     assert len(messages) == n
 
-    encoded2 = bbpb_cn.protobuf_from_json(message_json, typedef, config)
+    encoded2 = bbpbcn.protobuf_from_json(message_json, typedef, config)
     assert isinstance(encoded2, list)
     assert len(encoded2) == n
 
@@ -75,22 +75,22 @@ def test_anon_json_decode(x):
     """
     config = Config()
     typedef, message = x
-    encoded = bbpb_cn.encode_message(
+    encoded = bbpbcn.encode_message(
         message, config=config, message_type=typedef
     )
-    decoded_json, typedef_out = bbpb_cn.protobuf_to_json(
+    decoded_json, typedef_out = bbpbcn.protobuf_to_json(
         encoded, config=config
     )
-    bbpb_cn.validate_typedef(typedef_out)
+    bbpbcn.validate_typedef(typedef_out)
     note("JSON typedef: %r" % dict(typedef_out))
-    encoded_json = bbpb_cn.protobuf_from_json(
+    encoded_json = bbpbcn.protobuf_from_json(
         decoded_json, config=config, message_type=typedef_out
     )
     assert not isinstance(encoded_json, list)
-    decoded, typedef_out = bbpb_cn.decode_message(
+    decoded, typedef_out = bbpbcn.decode_message(
         encoded_json, config=config, message_type=typedef
     )
-    bbpb_cn.validate_typedef(typedef_out)
+    bbpbcn.validate_typedef(typedef_out)
     note("原始消息: %r" % message)
     note("解码 JSON: %r" % decoded_json)
     note("解码消息: %r" % decoded)

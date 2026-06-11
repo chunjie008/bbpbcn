@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 
 from . import hexconvert
 from . import api
-from .exceptions import bbpb_cnException
+from .exceptions import bbpbcnException
 
 LEN_FMT_NAMES = ['uint16_le', 'uint16_be', 'uint32_le', 'uint32_be']
 MSGID_FMT_NAMES = ['uint16_le', 'uint16_be', 'uint32_le', 'uint32_be']
@@ -247,7 +247,7 @@ def _find_protobuf_payloads(packets, header_size):
                 'valid': True,
                 'decoded': json.loads(message_json),
             })
-        except (bbpb_cnException, Exception):
+        except (bbpbcnException, Exception):
             results.append({'packet': p.index, 'valid': False, 'reason': 'decode_failed'})
     return results
 

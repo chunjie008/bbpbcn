@@ -12,8 +12,8 @@
 # 行为。
 
 import six
-from bbpb_cn.lib.exceptions import (
-    bbpb_cnException,
+from bbpbcn.lib.exceptions import (
+    bbpbcnException,
     EncoderException,
     TypedefException,
 )
@@ -23,7 +23,7 @@ if six.PY3:
 
     if typing.TYPE_CHECKING:
         from typing import Dict, Optional, Any, List, TypedDict, Tuple
-        from bbpb_cn.lib.config import Config
+        from bbpbcn.lib.config import Config
         from .pytypes import TypeDefDict, FieldDefDict
 
 

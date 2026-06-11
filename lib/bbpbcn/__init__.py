@@ -1,6 +1,6 @@
-﻿"""`bbpb_cn` 提供了解码和编码二进制 protobuf 消息的 API。
+﻿"""`bbpbcn` 提供了解码和编码二进制 protobuf 消息的 API。
 
-此模块重新导出 `bbpb_cn.lib.api` 中定义的函数，
+此模块重新导出 `bbpbcn.lib.api` 中定义的函数，
 其提供了高级接口和便利函数。
 
 此模块分为两个子模块：
@@ -22,4 +22,4 @@
 # 而产生的任何索赔、损害或其他责任承担责任，无论是合同行为、侵权行为还是其他
 # 行为。
 
-from bbpb_cn.lib.api import *
+from bbpbcn.lib.api import *

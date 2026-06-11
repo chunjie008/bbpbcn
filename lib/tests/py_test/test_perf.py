@@ -1,5 +1,5 @@
 ﻿import pytest
-import bbpb_cn
+import bbpbcn
 
 
 @pytest.mark.skip()
@@ -8,13 +8,13 @@ def test_wide():
 
     message = {"1": [1] * 10000000}
 
-    encoded = bbpb_cn.lib.encode_message(message, typedef)
-    decoded, _ = bbpb_cn.lib.decode_message(encoded, typedef)
+    encoded = bbpbcn.lib.encode_message(message, typedef)
+    decoded, _ = bbpbcn.lib.decode_message(encoded, typedef)
 
 
 @pytest.mark.skip()
 def test_deep():
-    config = bbpb_cn.lib.config.Config()
+    config = bbpbcn.lib.config.Config()
 
     typedef = {
         "1": {"type": "message", "message_type_name": "test"},
@@ -32,13 +32,13 @@ def test_deep():
 
         target_depth -= 1
 
-    encoded = bbpb_cn.lib.encode_message(message, typedef, config)
-    decoded, _ = bbpb_cn.lib.decode_message(encoded, typedef, config)
+    encoded = bbpbcn.lib.encode_message(message, typedef, config)
+    decoded, _ = bbpbcn.lib.decode_message(encoded, typedef, config)
 
 
 @pytest.mark.skip()
 def test_large_multilayer():
-    config = bbpb_cn.lib.config.Config()
+    config = bbpbcn.lib.config.Config()
 
     typedef = {
         "1": {"type": "message", "message_type_name": "test"},
@@ -56,5 +56,5 @@ def test_large_multilayer():
 
         target_depth -= 1
 
-    encoded = bbpb_cn.lib.encode_message(message, typedef, config)
-    decoded, _ = bbpb_cn.lib.decode_message(encoded, typedef, config)
+    encoded = bbpbcn.lib.encode_message(message, typedef, config)
+    decoded, _ = bbpbcn.lib.decode_message(encoded, typedef, config)

@@ -17,7 +17,7 @@ import binascii
 import struct
 import six
 
-from bbpb_cn.lib.exceptions import EncoderException, DecoderException
+from bbpbcn.lib.exceptions import EncoderException, DecoderException
 
 if six.PY3:
     from typing import Any, Tuple

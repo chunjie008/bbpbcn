@@ -20,17 +20,17 @@ import re
 import json
 import burp
 import traceback
-import bbpb_cn
+import bbpbcn
 from javax.swing import JSplitPane, JScrollPane, JPanel, JButton, BoxLayout, Box
 from javax.swing import JOptionPane, JList, ListSelectionModel, JFileChooser
 from javax.swing.filechooser import FileNameExtensionFilter
 from java.awt import Component, Dimension
 from java.awt.event import ActionListener
 from javax.swing.border import EmptyBorder
-from bbpb_cn.lib.api import sort_typedef
-from bbpb_cn.lib.config import default as default_config
+from bbpbcn.lib.api import sort_typedef
+from bbpbcn.lib.config import default as default_config
 
-from bbpb_cn.burp import typedef_editor
+from bbpbcn.burp import typedef_editor
 
 # TODO 将这些放在一个地方
 NAME_REGEX = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
@@ -318,7 +318,7 @@ class TypeDefinitionButtonListener(ActionListener):
                     return
                 print("overwriting file: %s" % file_name)
             try:
-                bbpb_cn.export_protofile(default_config.known_types, file_name)
+                bbpbcn.export_protofile(default_config.known_types, file_name)
             except Exception as exc:
                 self._typedef_tab._burp_callbacks.printError(traceback.format_exc())
                 JOptionPane.showMessageDialog(
@@ -351,7 +351,7 @@ class TypeDefinitionButtonListener(ActionListener):
                 )
                 return
             try:
-                new_typedefs = bbpb_cn.import_protofile(
+                new_typedefs = bbpbcn.import_protofile(
                     file_name, save_to_known=False
                 )
                 for key, value in new_typedefs.items():

@@ -16,7 +16,7 @@ from hypothesis import given
 import hypothesis.strategies as st
 import strategies
 
-from bbpb_cn.lib.types import fixed
+from bbpbcn.lib.types import fixed
 
 
 # 逆运算检查。确保 bbp 编码的值解码后得到相同的值

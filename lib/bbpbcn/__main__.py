@@ -20,7 +20,7 @@ import argparse
 import typing
 from typing import Any, Dict, Optional, Tuple
 
-from .lib.exceptions import bbpb_cnException
+from .lib.exceptions import bbpbcnException
 from .lib import api
 from .lib import payloads
 from .lib import hexconvert
@@ -394,7 +394,7 @@ def _decode(args, data, typedef, payload_encoding):
         for decode in decoders:
             try:
                 protobuf_data, encoding_alg = decode(data)
-            except bbpb_cnException:
+            except bbpbcnException:
                 # "none" 算法应该总是成功的
                 continue
 
@@ -403,7 +403,7 @@ def _decode(args, data, typedef, payload_encoding):
                     protobuf_data, typedef
                 )
                 break
-            except bbpb_cnException as exc:
+            except bbpbcnException as exc:
                 if encoding_alg == "none":
                     raise exc
 

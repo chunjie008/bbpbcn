@@ -18,10 +18,10 @@ import strategies
 import six
 import binascii
 
-from bbpb_cn.lib.config import Config
-from bbpb_cn.lib.types import length_delim
-from bbpb_cn.lib.types import type_maps
-from bbpb_cn.lib.typedef import TypeDef
+from bbpbcn.lib.config import Config
+from bbpbcn.lib.types import length_delim
+from bbpbcn.lib.types import type_maps
+from bbpbcn.lib.typedef import TypeDef
 
 
 # 测试当替代 typedef 字符串为 unicode/string 时的 bug

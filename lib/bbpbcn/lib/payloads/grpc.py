@@ -13,7 +13,7 @@
 
 import six
 import struct
-from bbpb_cn.lib.exceptions import bbpb_cnException
+from bbpbcn.lib.exceptions import bbpbcnException
 
 if six.PY3:
     from typing import Tuple
@@ -50,7 +50,7 @@ def decode_grpc(payload):
         payload = bytes(payload)
 
     if len(payload) == 0:
-        raise bbpb_cnException("Error decoding GRPC. Payload is empty")
+        raise bbpbcnException("Error decoding GRPC. Payload is empty")
 
     pos = 0
     payloads = []
@@ -62,11 +62,11 @@ def decode_grpc(payload):
                 # 负载已压缩
                 # 如果负载已压缩，压缩方法在 `grpc-encoding` 头部中指定
                 # 可选值为 "identity" / "gzip" / "deflate" / "snappy" / {自定义}
-                raise bbpb_cnException(
+                raise bbpbcnException(
                     "Error decoding GRPC. Compressed payloads are not supported"
                 )
             else:
-                raise bbpb_cnException(
+                raise bbpbcnException(
                     "Error decoding GRPC. First byte must be 0 or 1 to indicate compression"
                 )
 
@@ -74,7 +74,7 @@ def decode_grpc(payload):
         pos += 4
 
         if len(payload) < pos + message_length:
-            raise bbpb_cnException(
+            raise bbpbcnException(
                 "Error decoding GRPC. Payload length does not match encoded gRPC length"
             )
 
@@ -82,7 +82,7 @@ def decode_grpc(payload):
         pos += message_length
 
     if pos != len(payload):
-        raise bbpb_cnException(
+        raise bbpbcnException(
             "Error decoding GRPC. Payload length does not match encoded gRPC lengths"
         )
 
@@ -95,7 +95,7 @@ def decode_grpc(payload):
 def encode_grpc(data, encoding="grpc"):
     # type: (bytes | list[bytes], str) -> bytes
     if encoding != "grpc":
-        raise bbpb_cnException(
+        raise bbpbcnException(
             "Error encoding GRPC with encoding %s. GRPC is only supported with no compression"
             % encoding
         )

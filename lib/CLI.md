@@ -2,7 +2,7 @@
 
 ## 描述
 
-Blackbox Protobuf 库内置了 CLI 接口，可通过 `python -m bbpb_cn` 调用，用于 shell 脚本、集成到其他工具或轻松解码任意的 protobuf 消息。
+Blackbox Protobuf 库内置了 CLI 接口，可通过 `python -m bbpbcn` 调用，用于 shell 脚本、集成到其他工具或轻松解码任意的 protobuf 消息。
 
 ## 安装
 
@@ -21,7 +21,7 @@ bbpb
 或
 
 ~~~
-python3 -m bbpb_cn
+python3 -m bbpbcn
 ~~~
 
 ## 用法

@@ -1,4 +1,4 @@
-﻿"""bbpb_cn 的异常类"""
+﻿"""bbpbcn 的异常类"""
 
 # 版权所有 (c) 2018-2024 NCC Group Plc
 #
@@ -19,21 +19,21 @@ if six.PY3:
     from typing import Any, Optional, List
 
 
-class bbpb_cnException(Exception):
+class bbpbcnException(Exception):
     """Blackbox Protobuf 引发的异常的基类"""
 
     def __init__(self, message, path=None, *args):
         # type: (str, Optional[List[str]], Any) -> None
         self.path = path
-        super(bbpb_cnException, self).__init__(message, *args)
+        super(bbpbcnException, self).__init__(message, *args)
 
     def set_path(self, path):
-        # type: (bbpb_cnException, List[str]) -> None
+        # type: (bbpbcnException, List[str]) -> None
         if self.path is None:
             self.path = path
 
 
-class TypedefException(bbpb_cnException):
+class TypedefException(bbpbcnException):
     """当类型定义中识别出错误时抛出，例如冲突或不一致的值。"""
 
     def __str__(self):
@@ -49,7 +49,7 @@ class TypedefException(bbpb_cnException):
         return message
 
 
-class EncoderException(bbpb_cnException, ValueError):
+class EncoderException(bbpbcnException, ValueError):
     """当将字典编码为类型定义时出错时抛出"""
 
     def __str__(self):
@@ -64,7 +64,7 @@ class EncoderException(bbpb_cnException, ValueError):
         return message
 
 
-class DecoderException(bbpb_cnException, ValueError):
+class DecoderException(bbpbcnException, ValueError):
     """当将字节串解码为字典时出错时抛出"""
 
     def __str__(self):
@@ -79,11 +79,11 @@ class DecoderException(bbpb_cnException, ValueError):
         return message
 
 
-class ProtofileException(bbpb_cnException):
+class ProtofileException(bbpbcnException):
     def __init__(self, message, path=None, filename=None, *args):
         # type: (ProtofileException, str, Optional[List[str]], Optional[str], Any) -> None
         self.filename = filename
-        super(bbpb_cnException, self).__init__(message, path, *args)
+        super(bbpbcnException, self).__init__(message, path, *args)
 
     def __str__(self):
         # type: (ProtofileException) -> str

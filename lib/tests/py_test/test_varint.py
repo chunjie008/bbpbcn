@@ -19,8 +19,8 @@ import six
 
 from google.protobuf.internal import wire_format, encoder, decoder
 
-from bbpb_cn.lib.types import varint
-from bbpb_cn.lib.exceptions import EncoderException, DecoderException
+from bbpbcn.lib.types import varint
+from bbpbcn.lib.exceptions import EncoderException, DecoderException
 
 
 # 测试对于任意给定字节，以 varint 解码时不会改变它们
