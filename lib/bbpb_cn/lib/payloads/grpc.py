@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -13,7 +13,7 @@
 
 import six
 import struct
-from blackboxprotobuf.lib.exceptions import BlackboxProtobufException
+from bbpb_cn.lib.exceptions import bbpb_cnException
 
 if six.PY3:
     from typing import Tuple
@@ -50,7 +50,7 @@ def decode_grpc(payload):
         payload = bytes(payload)
 
     if len(payload) == 0:
-        raise BlackboxProtobufException("Error decoding GRPC. Payload is empty")
+        raise bbpb_cnException("Error decoding GRPC. Payload is empty")
 
     pos = 0
     payloads = []
@@ -62,11 +62,11 @@ def decode_grpc(payload):
                 # 负载已压缩
                 # 如果负载已压缩，压缩方法在 `grpc-encoding` 头部中指定
                 # 可选值为 "identity" / "gzip" / "deflate" / "snappy" / {自定义}
-                raise BlackboxProtobufException(
+                raise bbpb_cnException(
                     "Error decoding GRPC. Compressed payloads are not supported"
                 )
             else:
-                raise BlackboxProtobufException(
+                raise bbpb_cnException(
                     "Error decoding GRPC. First byte must be 0 or 1 to indicate compression"
                 )
 
@@ -74,7 +74,7 @@ def decode_grpc(payload):
         pos += 4
 
         if len(payload) < pos + message_length:
-            raise BlackboxProtobufException(
+            raise bbpb_cnException(
                 "Error decoding GRPC. Payload length does not match encoded gRPC length"
             )
 
@@ -82,7 +82,7 @@ def decode_grpc(payload):
         pos += message_length
 
     if pos != len(payload):
-        raise BlackboxProtobufException(
+        raise bbpb_cnException(
             "Error decoding GRPC. Payload length does not match encoded gRPC lengths"
         )
 
@@ -95,7 +95,7 @@ def decode_grpc(payload):
 def encode_grpc(data, encoding="grpc"):
     # type: (bytes | list[bytes], str) -> bytes
     if encoding != "grpc":
-        raise BlackboxProtobufException(
+        raise bbpb_cnException(
             "Error encoding GRPC with encoding %s. GRPC is only supported with no compression"
             % encoding
         )

@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -16,7 +16,7 @@ from hypothesis import given
 import hypothesis.strategies as st
 import strategies
 
-from blackboxprotobuf.lib.types import fixed
+from bbpb_cn.lib.types import fixed
 
 
 # 逆运算检查。确保 bbp 编码的值解码后得到相同的值

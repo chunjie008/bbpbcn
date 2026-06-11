@@ -1,4 +1,4 @@
-"""用于编码和解码 varint 类型的类"""
+﻿"""用于编码和解码 varint 类型的类"""
 
 # 版权所有 (c) 2018-2024 NCC Group Plc
 #
@@ -17,7 +17,7 @@ import binascii
 import struct
 import six
 
-from blackboxprotobuf.lib.exceptions import EncoderException, DecoderException
+from bbpb_cn.lib.exceptions import EncoderException, DecoderException
 
 if six.PY3:
     from typing import Any, Tuple

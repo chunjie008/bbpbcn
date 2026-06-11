@@ -1,4 +1,4 @@
-"""尝试测试库生成的异常。所有异常都应抛出某种形式的 BlackboxProtobufException。"""
+﻿"""尝试测试库生成的异常。所有异常都应抛出某种形式的 bbpb_cnException。"""
 
 # 版权所有 (c) 2018-2024 NCC Group Plc
 #
@@ -16,10 +16,10 @@
 from hypothesis import given
 import hypothesis.strategies as st
 
-from blackboxprotobuf.lib import config
-from blackboxprotobuf.lib.types import fixed, varint, length_delim
-from blackboxprotobuf.lib.exceptions import (
-    BlackboxProtobufException,
+from bbpb_cn.lib import config
+from bbpb_cn.lib.types import fixed, varint, length_delim
+from bbpb_cn.lib.exceptions import (
+    bbpb_cnException,
     DecoderException,
     EncoderException,
 )
@@ -32,7 +32,7 @@ from blackboxprotobuf.lib.exceptions import (
 def test_encode_fixed32(value):
     try:
         fixed.encode_fixed32(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -41,7 +41,7 @@ def test_encode_fixed32(value):
 def test_encode_sfixed32(value):
     try:
         fixed.encode_sfixed32(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -50,7 +50,7 @@ def test_encode_sfixed32(value):
 def test_encode_float(value):
     try:
         fixed.encode_float(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -59,7 +59,7 @@ def test_encode_float(value):
 def test_encode_fixed64(value):
     try:
         fixed.encode_fixed64(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -68,7 +68,7 @@ def test_encode_fixed64(value):
 def test_encode_sfixed64(value):
     try:
         fixed.encode_sfixed64(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -77,7 +77,7 @@ def test_encode_sfixed64(value):
 def test_encode_double(value):
     try:
         fixed.encode_double(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -89,7 +89,7 @@ def test_encode_double(value):
 def test_decode_fixed32(buf, pos):
     try:
         fixed.decode_fixed32(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -98,7 +98,7 @@ def test_decode_fixed32(buf, pos):
 def test_decode_sfixed32(buf, pos):
     try:
         fixed.decode_sfixed32(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -107,7 +107,7 @@ def test_decode_sfixed32(buf, pos):
 def test_decode_float(buf, pos):
     try:
         fixed.decode_float(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -116,7 +116,7 @@ def test_decode_float(buf, pos):
 def test_decode_fixed64(buf, pos):
     try:
         fixed.decode_fixed64(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -125,7 +125,7 @@ def test_decode_fixed64(buf, pos):
 def test_decode_sfixed64(buf, pos):
     try:
         fixed.decode_sfixed64(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -134,7 +134,7 @@ def test_decode_sfixed64(buf, pos):
 def test_decode_double(buf, pos):
     try:
         fixed.decode_double(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -144,7 +144,7 @@ def test_decode_double(buf, pos):
 def test_encode_uvarint(value):
     try:
         varint.encode_uvarint(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -153,7 +153,7 @@ def test_encode_uvarint(value):
 def test_encode_varint(value):
     try:
         varint.encode_varint(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -162,7 +162,7 @@ def test_encode_varint(value):
 def test_encode_svarint(value):
     try:
         varint.encode_svarint(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -171,7 +171,7 @@ def test_encode_svarint(value):
 def test_decode_uvarint(buf, pos):
     try:
         varint.decode_uvarint(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -180,7 +180,7 @@ def test_decode_uvarint(buf, pos):
 def test_decode_varint(buf, pos):
     try:
         varint.decode_varint(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -189,7 +189,7 @@ def test_decode_varint(buf, pos):
 def test_decode_svarint(buf, pos):
     try:
         varint.decode_svarint(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -201,7 +201,7 @@ def test_decode_svarint(buf, pos):
 def encode_bytes(value):
     try:
         length_delim.encode_bytes(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -210,7 +210,7 @@ def encode_bytes(value):
 def test_decode_bytes(value, pos):
     try:
         length_delim.decode_bytes(value, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -219,7 +219,7 @@ def test_decode_bytes(value, pos):
 def test_encode_bytes_hex(value):
     try:
         length_delim.encode_bytes_hex(value)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, DecoderException)
         pass
 
@@ -228,7 +228,7 @@ def test_encode_bytes_hex(value):
 def test_decode_bytes_hex(buf, pos):
     try:
         length_delim.decode_bytes_hex(buf, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -237,7 +237,7 @@ def test_decode_bytes_hex(buf, pos):
 def test_decode_string(value, pos):
     try:
         length_delim.decode_string(value, pos)
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -246,7 +246,7 @@ def test_decode_string(value, pos):
 def test_decode_message(buf):
     try:
         length_delim.decode_message(buf, config.Config())
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass
 
@@ -255,6 +255,6 @@ def test_decode_message(buf):
 def test_decode_lendelim_message(buf):
     try:
         length_delim.decode_lendelim_message(buf, config.Config())
-    except BlackboxProtobufException as exc:
+    except bbpb_cnException as exc:
         assert not isinstance(exc, EncoderException)
         pass

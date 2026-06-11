@@ -1,15 +1,15 @@
-"""`blackboxprotobuf.lib.api` 模块提供了用于解码和重新编码 protobuf 消息的高级函数。
+﻿"""`bbpb_cn.lib.api` 模块提供了用于解码和重新编码 protobuf 消息的高级函数。
 
 大多数函数接收输入数据、类型定义和配置对象。
 
-'message_type' 或类型定义（typedef）是 blackboxprotobuf 特定的格式，
+'message_type' 或类型定义（typedef）是 bbpb_cn 特定的格式，
 用于定义每个字段解码/编码时应使用的类型。
 解码函数中是可选的，但编码函数中必须提供。
 解码函数会返回一个 typedef，该 typedef 用于重新编码消息。
 如果在解码时提供了 typedef，则会使用这些类型进行解码，
 返回的 typedef 将是原始 typedef 加上消息中任何新字段的组合。
 
-config 参数来自 `blackboxprotobuf.lib.config` 的 Config 对象，
+config 参数来自 `bbpb_cn.lib.config` 的 Config 对象，
 允许重新配置默认类型，并存储可在其他 typedef 中引用的"已知"消息 typedef。
 可以省略此参数以使用默认的共享配置对象。
 """
@@ -31,16 +31,16 @@ import re
 import six
 import json
 import collections
-import blackboxprotobuf.lib.protofile
-import blackboxprotobuf.lib.types.length_delim
-import blackboxprotobuf.lib.types.type_maps
-from blackboxprotobuf.lib.config import default as default_config
-from blackboxprotobuf.lib.exceptions import (
+import bbpb_cn.lib.protofile
+import bbpb_cn.lib.types.length_delim
+import bbpb_cn.lib.types.type_maps
+from bbpb_cn.lib.config import default as default_config
+from bbpb_cn.lib.exceptions import (
     TypedefException,
     EncoderException,
     DecoderException,
 )
-from blackboxprotobuf.lib.typedef import TypeDef
+from bbpb_cn.lib.typedef import TypeDef
 
 if six.PY3:
     import typing
@@ -48,8 +48,8 @@ if six.PY3:
     # 如果不在这里检查，Config 会有循环导入
     if typing.TYPE_CHECKING:
         from typing import Dict, List, Optional
-        from blackboxprotobuf.lib.pytypes import Message, TypeDefDict, FieldDefDict
-        from blackboxprotobuf.lib.config import Config
+        from bbpb_cn.lib.pytypes import Message, TypeDefDict, FieldDefDict
+        from bbpb_cn.lib.config import Config
 
 
 def decode_message(buf, message_type=None, config=None):
@@ -61,9 +61,9 @@ def decode_message(buf, message_type=None, config=None):
         message_type: 可选，用作解码基础的类型。允许自定义字段类型或名称。
             可以是 Python 字典，也可以是对应 config 中 `known_types` 字典的消息类型名称。
             默认为空定义 '{}'。
-        config: `blackboxprotobuf.lib.config.Config` 对象，允许自定义
+        config: `bbpb_cn.lib.config.Config` 对象，允许自定义
             线类型的默认类型，并包含 `known_types` 数组。
-            如果未提供，默认为 `blackboxprotobuf.lib.config.default`。
+            如果未提供，默认为 `bbpb_cn.lib.config.default`。
     Returns:
         包含表示消息的 Python 字典和用于重新编码消息的类型定义的元组。
 
@@ -89,7 +89,7 @@ def decode_message(buf, message_type=None, config=None):
         raise DecoderException(
             "Decode message received an invalid typedef type. Typedef should be a string with a message name, a dictionary, or None"
         )
-    value, typedef, _, _ = blackboxprotobuf.lib.types.length_delim.decode_message(
+    value, typedef, _, _ = bbpb_cn.lib.types.length_delim.decode_message(
         buf, config, TypeDef.from_dict(message_type)
     )
     return value, typedef.to_dict()
@@ -104,9 +104,9 @@ def encode_message(value, message_type, config=None):
             由 `decode_message` 返回的字典的修改版本。
         message_type: 用于重新编码消息的类型定义。
             通常是原始 `decode_message` 调用返回的类型定义。
-        config: `blackboxprotobuf.lib.config.Config` 对象，允许自定义
+        config: `bbpb_cn.lib.config.Config` 对象，允许自定义
             线类型的默认类型，并包含 `known_types` 数组。
-            如果未提供，默认为 `blackboxprotobuf.lib.config.default`。
+            如果未提供，默认为 `bbpb_cn.lib.config.default`。
     Returns:
         包含编码后的 protobuf 消息的字节数组。
     """
@@ -132,7 +132,7 @@ def encode_message(value, message_type, config=None):
             "Encode message received an invalid typedef type. Typedef should be a string with a message name or a dictionary."
         )
     return bytes(
-        blackboxprotobuf.lib.types.length_delim.encode_message(
+        bbpb_cn.lib.types.length_delim.encode_message(
             value, config, TypeDef.from_dict(message_type)
         )
     )
@@ -147,9 +147,9 @@ def protobuf_to_json(buf, message_type=None, config=None):
         message_type: 可选，用作解码基础的类型。允许自定义字段类型或名称。
             可以是 Python 字典，也可以是对应 config 中 `known_types` 字典的消息类型名称。
             默认为空定义 '{}'。
-        config: `blackboxprotobuf.lib.config.Config` 对象，允许自定义
+        config: `bbpb_cn.lib.config.Config` 对象，允许自定义
             线类型的默认类型，并包含 `known_types` 数组。
-            如果未提供，默认为 `blackboxprotobuf.lib.config.default`。
+            如果未提供，默认为 `bbpb_cn.lib.config.default`。
     Returns:
         包含表示消息的 JSON 字符串和用于重新编码消息的类型定义的元组。
 
@@ -194,9 +194,9 @@ def protobuf_from_json(json_str, message_type, config=None):
             通常是 `protobuf_to_json` 返回的值的修改版本。
         message_type: 用于重新编码消息的类型定义。
             通常是原始 `protobuf_to_json` 调用返回的类型定义。
-        config: `blackboxprotobuf.lib.config.Config` 对象，允许自定义
+        config: `bbpb_cn.lib.config.Config` 对象，允许自定义
             线类型的默认类型，并包含 `known_types` 数组。
-            如果未提供，默认为 `blackboxprotobuf.lib.config.default`。
+            如果未提供，默认为 `bbpb_cn.lib.config.default`。
     Returns:
         包含编码后的 protobuf 消息的字节数组。
     """
@@ -239,7 +239,7 @@ def export_protofile(message_types, output_filename):
             字典的键为消息类型名称，值为类型定义。
         output_filename: 表示输出 protobuf 定义文件的文件名字符串。
     """
-    blackboxprotobuf.lib.protofile.export_proto(
+    bbpb_cn.lib.protofile.export_proto(
         message_types, output_filename=output_filename
     )
 
@@ -248,7 +248,7 @@ def import_protofile(input_filename, save_to_known=True, config=None):
     # type: (str, bool, Optional[Config]) -> Dict[str, TypeDefDict] | None
     """此函数尝试从 `.proto` 文件导入一组消息类型定义。
 
-    这是 `blackboxprotobuf.lib.protofile` 的便捷函数。
+    这是 `bbpb_cn.lib.protofile` 的便捷函数。
     protobuf 文件导入支持不完整，可能对某些类型定义失败。
 
     Args:
@@ -257,7 +257,7 @@ def import_protofile(input_filename, save_to_known=True, config=None):
             保存到 `config.known_types`。否则，将其返回给调用者。
             默认为 `True`。
         config: 可选配置对象，存储 `known_types` 映射。
-            默认为 `blackboxprotobuf.lib.config.default`。
+            默认为 `bbpb_cn.lib.config.default`。
     Returns:
         如果 `save_to_known` 为 False，则从文件读取的类型定义
         以字典形式返回，键为类型名称，值为类型定义。
@@ -265,7 +265,7 @@ def import_protofile(input_filename, save_to_known=True, config=None):
     if config is None:
         config = default_config
 
-    new_typedefs = blackboxprotobuf.lib.protofile.import_proto(
+    new_typedefs = bbpb_cn.lib.protofile.import_proto(
         config, input_filename=input_filename
     )
     if save_to_known:
@@ -295,7 +295,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
             但不能更改为字符串或浮点数。
         config: 可选，提供包含 `known_types` 映射的配置对象，
             用于将消息类型名称映射到已知的类型定义。
-            默认为 `blackboxprotobuf.lib.config.default`。
+            默认为 `bbpb_cn.lib.config.default`。
     Raises:
         TypedefException: 如果提供的类型定义无效，则引发 TypedefException。
     """
@@ -373,7 +373,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
 
             # 验证 type 值
             if key == "type":
-                if value not in blackboxprotobuf.lib.types.type_maps.WIRETYPES:
+                if value not in bbpb_cn.lib.types.type_maps.WIRETYPES:
                     raise TypedefException(
                         'Invalid type "%s" for field number %s' % (value, field_number),
                         field_path,
@@ -446,7 +446,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
         for field_number, value in old_typedef.items():
             wiretype_map[
                 int(field_number)
-            ] = blackboxprotobuf.lib.types.type_maps.WIRETYPES[value["type"]]
+            ] = bbpb_cn.lib.types.type_maps.WIRETYPES[value["type"]]
         for field_number, value in typedef.items():
             field_path = _path[:]
             field_path.append(str(field_number))
@@ -454,7 +454,7 @@ def validate_typedef(typedef, old_typedef=None, config=None, _path=None):
                 old_wiretype = wiretype_map[int(field_number)]
                 if (
                     old_wiretype
-                    != blackboxprotobuf.lib.types.type_maps.WIRETYPES[value["type"]]
+                    != bbpb_cn.lib.types.type_maps.WIRETYPES[value["type"]]
                 ):
                     raise TypedefException(
                         (
@@ -665,7 +665,7 @@ def sort_typedef(typedef):
     位于顶部，不会被 'message_typedef' 等较长字段埋没。
     同时也会根据字段编号对 'message_typedef' 的键进行排序。
     Args:
-        typedef - 表示 Blackboxprotobuf 类型定义的字典
+        typedef - 表示 bbpb_cn 类型定义的字典
     Returns:
         一个新的 OrderedDict 对象，包含为可读性排序后的 typedef 参数内容。
     """

@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -20,7 +20,7 @@ import argparse
 import typing
 from typing import Any, Dict, Optional, Tuple
 
-from .lib.exceptions import BlackboxProtobufException
+from .lib.exceptions import bbpb_cnException
 from .lib import api
 from .lib import payloads
 from .lib import hexconvert
@@ -394,7 +394,7 @@ def _decode(args, data, typedef, payload_encoding):
         for decode in decoders:
             try:
                 protobuf_data, encoding_alg = decode(data)
-            except BlackboxProtobufException:
+            except bbpb_cnException:
                 # "none" 算法应该总是成功的
                 continue
 
@@ -403,7 +403,7 @@ def _decode(args, data, typedef, payload_encoding):
                     protobuf_data, typedef
                 )
                 break
-            except BlackboxProtobufException as exc:
+            except bbpb_cnException as exc:
                 if encoding_alg == "none":
                     raise exc
 

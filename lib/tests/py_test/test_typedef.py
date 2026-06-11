@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -18,10 +18,10 @@ import strategies
 import six
 import binascii
 
-from blackboxprotobuf.lib.config import Config
-from blackboxprotobuf.lib.types import length_delim
-from blackboxprotobuf.lib.types import type_maps
-from blackboxprotobuf.lib.typedef import TypeDef
+from bbpb_cn.lib.config import Config
+from bbpb_cn.lib.types import length_delim
+from bbpb_cn.lib.types import type_maps
+from bbpb_cn.lib.typedef import TypeDef
 
 
 # 测试当替代 typedef 字符串为 unicode/string 时的 bug

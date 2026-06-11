@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -14,7 +14,7 @@
 """ payloads 模块旨在处理 protobuf 数据的不同编码方式，
     例如压缩和 grpc 头部。 """
 
-from blackboxprotobuf.lib.exceptions import BlackboxProtobufException
+from bbpb_cn.lib.exceptions import bbpb_cnException
 from . import gzip, grpc
 
 import six
@@ -61,7 +61,7 @@ def decode_payload(buf, decoder):
     elif decoder == "gzip":
         return gzip.decode_gzip(buf)
     else:
-        raise BlackboxProtobufException("Unknown decoder: " + decoder)
+        raise bbpb_cnException("Unknown decoder: " + decoder)
 
 
 # 按名称编码，应传入 decode 函数的结果
@@ -73,7 +73,7 @@ def encode_payload(buf, encoder):
     encoder = encoder.lower()
     if encoder == "none":
         if isinstance(buf, list):
-            raise BlackboxProtobufException(
+            raise bbpb_cnException(
                 "Cannot encode multiple buffers with none/missing encoding"
             )
         return buf
@@ -82,4 +82,4 @@ def encode_payload(buf, encoder):
     elif encoder == "gzip":
         return gzip.encode_gzip(buf)
     else:
-        raise BlackboxProtobufException("Unknown encoder: " + encoder)
+        raise bbpb_cnException("Unknown encoder: " + encoder)

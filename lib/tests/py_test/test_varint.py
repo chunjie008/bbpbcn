@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -19,8 +19,8 @@ import six
 
 from google.protobuf.internal import wire_format, encoder, decoder
 
-from blackboxprotobuf.lib.types import varint
-from blackboxprotobuf.lib.exceptions import EncoderException, DecoderException
+from bbpb_cn.lib.types import varint
+from bbpb_cn.lib.exceptions import EncoderException, DecoderException
 
 
 # 测试对于任意给定字节，以 varint 解码时不会改变它们

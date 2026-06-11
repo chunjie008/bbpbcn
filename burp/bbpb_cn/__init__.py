@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2023 NCC Group Plc
+﻿# 版权所有 (c) 2018-2023 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -24,7 +24,7 @@ sys.path.insert(0, _BASE_DIR + "/lib/")
 sys.path.insert(0, _BASE_DIR + "/burp/deps/six/")
 sys.path.insert(0, _BASE_DIR + "/burp/deps/protobuf/python/")
 
-# extend_path 会在 sys.path 中查找其他 'blackboxprotobuf' 模块并将它们添加到 __path__
+# extend_path 会在 sys.path 中查找其他 'bbpb_cn' 模块并将它们添加到 __path__
 from pkgutil import extend_path
 
 __path__ = extend_path(__path__, __name__)
@@ -48,5 +48,5 @@ def fix_protobuf():
 
 fix_protobuf()
 
-# 镜像 lib 中的操作，以便我们可以使用 blackboxprotobuf.<function>
-from blackboxprotobuf.lib.api import *
+# 镜像 lib 中的操作，以便我们可以使用 bbpb_cn.<function>
+from bbpb_cn.lib.api import *

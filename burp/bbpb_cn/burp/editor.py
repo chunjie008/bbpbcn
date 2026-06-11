@@ -1,4 +1,4 @@
-"""包含创建 Protobuf 编辑器选项卡所需的类。"""
+﻿"""包含创建 Protobuf 编辑器选项卡所需的类。"""
 
 # 版权所有 (c) 2018-2023 NCC Group Plc
 #
@@ -21,7 +21,7 @@ import zlib
 import burp
 import copy
 import struct
-import blackboxprotobuf
+import bbpb_cn
 from javax.swing import JSplitPane, JPanel, JButton, BoxLayout, JOptionPane
 from javax.swing import (
     Box,
@@ -35,12 +35,12 @@ from javax.swing.event import ListSelectionListener, ListDataEvent, ListDataList
 from java.awt import Component, Dimension, FlowLayout
 from java.awt.event import ActionListener
 from javax.swing.border import EmptyBorder
-from blackboxprotobuf.burp import user_funcs
-from blackboxprotobuf.burp import typedef_editor
-from blackboxprotobuf.lib import payloads
-from blackboxprotobuf.lib.config import default as default_config
-from blackboxprotobuf.lib.exceptions import (
-    BlackboxProtobufException,
+from bbpb_cn.burp import user_funcs
+from bbpb_cn.burp import typedef_editor
+from bbpb_cn.lib import payloads
+from bbpb_cn.lib.config import default as default_config
+from bbpb_cn.lib.exceptions import (
+    bbpb_cnException,
     DecoderException,
     EncoderException,
 )
@@ -125,7 +125,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         success = False
         try:
             json_data = self._text_editor.getText().tostring()
-            protobuf_data = blackboxprotobuf.protobuf_from_json(
+            protobuf_data = bbpb_cn.protobuf_from_json(
                 json_data, self._last_good.typedef
             )
 
@@ -138,7 +138,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
 
         if not success:
             try:
-                protobuf_data = blackboxprotobuf.protobuf_from_json(
+                protobuf_data = bbpb_cn.protobuf_from_json(
                     self._last_good.message, self._last_good.typedef
                 )
 
@@ -173,7 +173,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         设置编辑器的 protobuf 消息。
         """
         try:
-            json_data, message_type = blackboxprotobuf.protobuf_to_json(
+            json_data, message_type = bbpb_cn.protobuf_to_json(
                 protobuf_data, message_type_in
             )
 
@@ -251,7 +251,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                 for decoder in decoders:
                     try:
                         protobuf_data, encoding_alg = decoder(payload_info.raw_data)
-                    except BlackboxProtobufException:
+                    except bbpb_cnException:
                         continue
 
                     try:
@@ -267,7 +267,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
                         self._payload_info.encoding_alg = encoding_alg
 
                         return
-                    except BlackboxProtobufException:
+                    except bbpb_cnException:
                         if encoding_alg == "none":
                             # 将异常重新抛出到父上下文并停止解码
                             six.reraise(*sys.exc_info())
@@ -398,7 +398,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         try:
             json_data = self._text_editor.getText().tostring()
             typedef = self._last_good.typedef
-            protobuf_data = blackboxprotobuf.protobuf_from_json(json_data, typedef)
+            protobuf_data = bbpb_cn.protobuf_from_json(json_data, typedef)
             # 如果成功，保存消息
             # 不需要保存 typedef，因为我们使用的是 lastgood 中的那个
             self._last_good.message = json_data
@@ -447,7 +447,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
 
         try:
             self.applyType(default_config.known_types[type_name], type_name)
-        except BlackboxProtobufException as exc:
+        except bbpb_cnException as exc:
             self._callbacks.printError(traceback.format_exc())
 
             if isinstance(exc, EncoderException):
@@ -483,7 +483,7 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
             # 这里的解码会抛出异常，如果类型无效将阻止我们
             # 关闭 typedef 编辑器窗口
             self.applyType(typedef, source)
-        except BlackboxProtobufException as exc:
+        except bbpb_cnException as exc:
             self._callbacks.printError("Got exception trying to apply edited typedef.")
             JOptionPane.showMessageDialog(
                 self._component,
@@ -507,10 +507,10 @@ class ProtoBufEditorTab(burp.IMessageEditorTab):
         old_typedef = self._last_good.typedef
         json_data = self._text_editor.getText().tostring()
 
-        protobuf_data = blackboxprotobuf.protobuf_from_json(json_data, old_typedef)
+        protobuf_data = bbpb_cn.protobuf_from_json(json_data, old_typedef)
         self._payload_info.protobuf_data = protobuf_data
 
-        new_json, new_typedef = blackboxprotobuf.protobuf_to_json(
+        new_json, new_typedef = bbpb_cn.protobuf_to_json(
             protobuf_data, typedef
         )
 
@@ -740,8 +740,8 @@ class FilteredMessageModel(ListModel, ListDataListener):
             return False
         typedef = default_config.known_types[typename]
         try:
-            _, _ = blackboxprotobuf.protobuf_to_json(self._data, typedef)
-        except BlackboxProtobufException as exc:
+            _, _ = bbpb_cn.protobuf_to_json(self._data, typedef)
+        except bbpb_cnException as exc:
             self._callbacks.printError(traceback.format_exc())
             self._rejected_types.add(typename)
             return False
@@ -867,7 +867,7 @@ class PayloadInfo:
                 return result
 
         if self.protobuf_data is None:
-            raise BlackboxProtobufException(
+            raise bbpb_cnException(
                 "Error generating HTTP body. PayloadInfo does not have valid protobuf data to encode"
             )
         raw_data = payloads.encode_payload(self.protobuf_data, self.encoding_alg)

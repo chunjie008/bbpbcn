@@ -1,4 +1,4 @@
-"""对固定大小的整数和浮点数进行编码和解码的函数"""
+﻿"""对固定大小的整数和浮点数进行编码和解码的函数"""
 
 # 版权所有 (c) 2018-2024 NCC Group Plc
 #
@@ -16,7 +16,7 @@
 import struct
 import binascii
 import six
-from blackboxprotobuf.lib.exceptions import DecoderException, EncoderException
+from bbpb_cn.lib.exceptions import DecoderException, EncoderException
 
 import six
 

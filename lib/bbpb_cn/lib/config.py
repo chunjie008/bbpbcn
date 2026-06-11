@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -14,7 +14,7 @@
 from .types import type_maps
 
 import six
-from blackboxprotobuf.lib.exceptions import (
+from bbpb_cn.lib.exceptions import (
     DecoderException,
 )
 
@@ -29,7 +29,7 @@ if six.PY3:
 class Config:
     def __init__(self):
         # type: (Config) -> None
-        # 消息类型名称到 typedef 的映射，之前存储在 `blackboxprotobuf.known_messages`
+        # 消息类型名称到 typedef 的映射，之前存储在 `bbpb_cn.known_messages`
         self.known_types = {}  # type: Dict[str, TypeDefDict]
 
         # 非消息或字符串的"bytes"类对象的默认类型

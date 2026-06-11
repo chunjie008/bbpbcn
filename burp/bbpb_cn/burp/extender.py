@@ -1,4 +1,4 @@
-"""添加顶层类型定义编辑器并注册各个选项卡的 protobuf 消息
+﻿"""添加顶层类型定义编辑器并注册各个选项卡的 protobuf 消息
 编辑器工厂
 """
 
@@ -31,12 +31,12 @@ _BASE_DIR = os.path.abspath(
 )
 sys.path.insert(0, _BASE_DIR + "/burp/")
 
-import blackboxprotobuf
-from blackboxprotobuf.lib.config import default as default_config
-from blackboxprotobuf.burp import editor, typedef_tab, typedef_editor
+import bbpb_cn
+from bbpb_cn.lib.config import default as default_config
+from bbpb_cn.burp import editor, typedef_tab, typedef_editor
 
 
-EXTENSION_NAME = "BlackboxProtobuf"
+EXTENSION_NAME = "bbpb_cn"
 
 
 class BurpExtender(burp.IBurpExtender, burp.IExtensionStateListener):
@@ -49,7 +49,7 @@ class BurpExtender(burp.IBurpExtender, burp.IExtensionStateListener):
         self.saved_types = {}
         self.suite_tab = None
         # 所有视图的已知消息全局列表
-        # 这应与 blackboxprotobuf.known_messages 中的内容保持一致
+        # 这应与 bbpb_cn.known_messages 中的内容保持一致
         # TODO 将它们捆绑在一起，这样就不需要手动更新了
         self.known_message_model = DefaultListModel()
         self.refresh_message_model()

@@ -1,4 +1,4 @@
-""" TypeDefinitionTab 是 Burp Suite 的顶层选项卡，允许随时添加/修改已保存/命名的
+﻿""" TypeDefinitionTab 是 Burp Suite 的顶层选项卡，允许随时添加/修改已保存/命名的
     类型。它还提供了将 protobuf 类型导入/导出到 .json 文件的选项。
 """
 
@@ -20,17 +20,17 @@ import re
 import json
 import burp
 import traceback
-import blackboxprotobuf
+import bbpb_cn
 from javax.swing import JSplitPane, JScrollPane, JPanel, JButton, BoxLayout, Box
 from javax.swing import JOptionPane, JList, ListSelectionModel, JFileChooser
 from javax.swing.filechooser import FileNameExtensionFilter
 from java.awt import Component, Dimension
 from java.awt.event import ActionListener
 from javax.swing.border import EmptyBorder
-from blackboxprotobuf.lib.api import sort_typedef
-from blackboxprotobuf.lib.config import default as default_config
+from bbpb_cn.lib.api import sort_typedef
+from bbpb_cn.lib.config import default as default_config
 
-from blackboxprotobuf.burp import typedef_editor
+from bbpb_cn.burp import typedef_editor
 
 # TODO 将这些放在一个地方
 NAME_REGEX = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
@@ -318,7 +318,7 @@ class TypeDefinitionButtonListener(ActionListener):
                     return
                 print("overwriting file: %s" % file_name)
             try:
-                blackboxprotobuf.export_protofile(default_config.known_types, file_name)
+                bbpb_cn.export_protofile(default_config.known_types, file_name)
             except Exception as exc:
                 self._typedef_tab._burp_callbacks.printError(traceback.format_exc())
                 JOptionPane.showMessageDialog(
@@ -351,7 +351,7 @@ class TypeDefinitionButtonListener(ActionListener):
                 )
                 return
             try:
-                new_typedefs = blackboxprotobuf.import_protofile(
+                new_typedefs = bbpb_cn.import_protofile(
                     file_name, save_to_known=False
                 )
                 for key, value in new_typedefs.items():

@@ -6,16 +6,16 @@
 
 ## 安装
 
-1. 克隆 Blackboxprotobuf 仓库：
+1. 克隆 bbpb_cn 仓库：
    
    ```
-   git clone https://github.com/chunjie008/blackboxprotobuf.git
+   git clone https://github.com/chunjie008/bbpb_cn.git
    ```
    
 2. 更新包含依赖的子模块：
    
    ```
-   cd blackboxprotobuf/
+   cd bbpb_cn/
    git submodule update --init
    ```
 
@@ -35,7 +35,7 @@
    
    如果 `mitmproxy` 安装在虚拟环境中，则 `bbpb` 包也需要安装在该虚拟环境中。
 
-2. 从 <https://github.com/chunjie008/blackboxprotobuf/blob/master/mitmproxy/bbpb.py> 下载 `bbpb.py`。
+2. 从 <https://github.com/chunjie008/bbpb_cn/blob/master/mitmproxy/bbpb.py> 下载 `bbpb.py`。
 
 3. 使用该插件脚本运行 mitmproxy：
    

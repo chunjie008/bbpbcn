@@ -1,4 +1,4 @@
-"""用于从 BBP 类型定义格式导入和导出 '.proto' 文件的 Python 方法。"""
+﻿"""用于从 BBP 类型定义格式导入和导出 '.proto' 文件的 Python 方法。"""
 
 # 版权所有 (c) 2018-2024 NCC Group Plc
 #
@@ -19,16 +19,16 @@ import logging
 import re
 import six
 
-from blackboxprotobuf.lib.exceptions import TypedefException, ProtofileException
-import blackboxprotobuf.lib.api
+from bbpb_cn.lib.exceptions import TypedefException, ProtofileException
+import bbpb_cn.lib.api
 
 if six.PY3:
     import typing
 
     if typing.TYPE_CHECKING:
-        from blackboxprotobuf.lib.config import Config
+        from bbpb_cn.lib.config import Config
         from typing import Any, TextIO, Tuple, Dict, Optional, List
-        from blackboxprotobuf.lib.pytypes import TypeDefDict, FieldDefDict
+        from bbpb_cn.lib.pytypes import TypeDefDict, FieldDefDict
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ def _print_message(message_name, typedef, output_file, depth=0):
         raise TypedefException("Message name: %s is not valid" % message_name)
 
     # 对 typedef 排序以获得更好的输出效果
-    typedef = blackboxprotobuf.lib.api.sort_typedef(typedef)
+    typedef = bbpb_cn.lib.api.sort_typedef(typedef)
 
     message_name = message_name.strip()
     output_file.write(six.u("\n"))

@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -16,9 +16,9 @@ import hypothesis.strategies as st
 import strategies
 import pytest
 
-from blackboxprotobuf.lib import payloads
-from blackboxprotobuf.lib.payloads import grpc, gzip
-from blackboxprotobuf.lib.exceptions import BlackboxProtobufException
+from bbpb_cn.lib import payloads
+from bbpb_cn.lib.payloads import grpc, gzip
+from bbpb_cn.lib.exceptions import bbpb_cnException
 
 
 def test_grpc():
@@ -28,22 +28,22 @@ def test_grpc():
     assert encoding == "grpc"
 
     # 压缩标志
-    with pytest.raises(BlackboxProtobufException):
+    with pytest.raises(bbpb_cnException):
         message = bytearray([0x01, 0x00, 0x00, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
     # 未知标志
-    with pytest.raises(BlackboxProtobufException):
+    with pytest.raises(bbpb_cnException):
         message = bytearray([0x11, 0x00, 0x00, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
     # 长度错误
-    with pytest.raises(BlackboxProtobufException):
+    with pytest.raises(bbpb_cnException):
         message = bytearray([0x00, 0x00, 0x01, 0x00, 0x01, 0xAA])
         data = grpc.decode_grpc(message)
 
     # 长度错误
-    with pytest.raises(BlackboxProtobufException):
+    with pytest.raises(bbpb_cnException):
         message = bytearray([0x00, 0x00, 0x00, 0x00, 0x01, 0xAA, 0xBB])
         data = grpc.decode_grpc(message)
 

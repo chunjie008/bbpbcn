@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 
 # 版权所有 (c) 2018-2024 NCC Group Plc
 #
@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, "../")
 
-import blackboxprotobuf as bbp
+import bbpb_cn as bbp
 
 typedef = {}
 

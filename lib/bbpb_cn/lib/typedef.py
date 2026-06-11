@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -12,8 +12,8 @@
 # 行为。
 
 import six
-from blackboxprotobuf.lib.exceptions import (
-    BlackboxProtobufException,
+from bbpb_cn.lib.exceptions import (
+    bbpb_cnException,
     EncoderException,
     TypedefException,
 )
@@ -23,7 +23,7 @@ if six.PY3:
 
     if typing.TYPE_CHECKING:
         from typing import Dict, Optional, Any, List, TypedDict, Tuple
-        from blackboxprotobuf.lib.config import Config
+        from bbpb_cn.lib.config import Config
         from .pytypes import TypeDefDict, FieldDefDict
 
 

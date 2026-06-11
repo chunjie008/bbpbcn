@@ -1,4 +1,4 @@
-"""包含 protobuf 类型的各种映射，包括编码/解码
+﻿"""包含 protobuf 类型的各种映射，包括编码/解码
 函数、线缆类型（wiretype）和默认类型
 """
 
@@ -15,14 +15,14 @@
 # 而产生的任何索赔、损害或其他责任承担责任，无论是合同行为、侵权行为还是其他
 # 行为。
 
-from blackboxprotobuf.lib.types import varint, fixed, length_delim, wiretypes
+from bbpb_cn.lib.types import varint, fixed, length_delim, wiretypes
 
 import six
 
 if six.PY3:
     from typing import Any, Callable, Dict, Tuple
 
-# 将 blackboxprotobuf 类型映射到具体的编码器
+# 将 bbpb_cn 类型映射到具体的编码器
 ENCODERS = {
     "uint": varint.encode_uvarint,
     "int": varint.encode_varint,
@@ -47,7 +47,7 @@ ENCODERS = {
     "packed_double": length_delim.generate_packed_encoder(fixed.encode_double),
 }  # type: Dict[str, Callable[[Any], bytes]]
 
-# 将 blackboxprotobuf 类型映射到具体的解码器
+# 将 bbpb_cn 类型映射到具体的解码器
 DECODERS = {
     "uint": varint.decode_uvarint,
     "int": varint.decode_varint,

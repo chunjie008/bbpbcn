@@ -5,7 +5,7 @@
 这是一个用于拦截代理 Burp Suite (<https://portswigger.net/burp/>) 的扩展，允许编码和解码可能包含在拦截请求中的任意 protocol buffer (<https://developers.google.com/protocol-buffers/>) 消息。它设计用于在没有 protobuf 定义文件 (.proto) 的情况下工作——这类文件可能不可用，或无法与现有的 Burp 扩展一起使用。
 
 关于 protobuf 解码的背景信息以及类型系统的详细说明和可能的类型边界情况，请参见库文档：
-<https://github.com/chunjie008/blackboxprotobuf/blob/master/lib/README.md>
+<https://github.com/chunjie008/bbpb_cn/blob/master/lib/README.md>
 
 # 用法
 ## 安装
@@ -22,7 +22,7 @@
 
 每个内容类型为 "x-protobuf" 或 "application/protobuf" 的消息窗口都会新增一个标签页（可通过 `user_funcs.py` 配置）。protobuf 消息将被解析为 JSON 字典，以编号字段作为键。只要新值类型相同，就可以修改这些值。
 
-上方的列表显示可用于解码此消息的命名类型定义列表。选择一个将使用新类型重新解码消息。Blackboxprotobuf 会尝试记住该端点最后选择的类型。`New` 按钮将当前类型定义保存为新名称。
+上方的列表显示可用于解码此消息的命名类型定义列表。选择一个将使用新类型重新解码消息。bbpb_cn 会尝试记住该端点最后选择的类型。`New` 按钮将当前类型定义保存为新名称。
 
 "Validate" 按钮验证修改后的 JSON 消息能否重新编码。最好在切换到其他视图或发送消息之前使用此功能验证消息。如果你在 payload 无效的情况下切换标签页，将引发错误并重置为原始值。
 
@@ -70,7 +70,7 @@
 
 ## 用户函数
 
-扩展的某些行为可以通过 `burp/blackboxprotobuf/burp/user_funcs.py` 文件来更改。每个函数由扩展调用，以提供处理消息的替代方式：
+扩展的某些行为可以通过 `burp/bbpb_cn/burp/user_funcs.py` 文件来更改。每个函数由扩展调用，以提供处理消息的替代方式：
 
 * `detect_protobuf` — 自定义扩展如何判断请求/响应是否为 protobuf 消息。默认情况下，扩展检查几个 content-type 头部来决定何时将请求/响应解析为 protobuf。此函数可用于检查其他头部、参数，或直接对所有消息返回 True。如果是 protobuf 应返回 `True`，否则返回 `False`，或返回 `None` 以回退到 content-type 检查。
 * `get_protobuf_data` — 自定义从消息中获取数据的过程。默认情况下，扩展从消息体中获取二进制数据。此函数可用于从其他位置（如头部或参数）获取数据。也可用于解析非默认编码。应返回 protobuf 数据。

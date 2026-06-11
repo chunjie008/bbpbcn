@@ -1,4 +1,4 @@
-"""用于编码和解码长度分隔（length delimited）字段的模块"""
+﻿"""用于编码和解码长度分隔（length delimited）字段的模块"""
 
 # 版权所有 (c) 2018-2024 NCC Group Plc
 #
@@ -21,15 +21,15 @@ import sys
 import six
 import logging
 
-import blackboxprotobuf.lib
-from blackboxprotobuf.lib.types import varint, wiretypes
-from blackboxprotobuf.lib.exceptions import (
+import bbpb_cn.lib
+from bbpb_cn.lib.types import varint, wiretypes
+from bbpb_cn.lib.exceptions import (
     EncoderException,
     DecoderException,
     TypedefException,
-    BlackboxProtobufException,
+    bbpb_cnException,
 )
-from blackboxprotobuf.lib.typedef import (
+from bbpb_cn.lib.typedef import (
     TypeDef,
     MutableTypeDef,
     FieldDef,
@@ -40,9 +40,9 @@ if six.PY3:
     import typing
 
     if typing.TYPE_CHECKING:
-        from blackboxprotobuf.lib.config import Config
+        from bbpb_cn.lib.config import Config
         from typing import Any, Callable, Dict, Tuple, Optional, List
-        from blackboxprotobuf.lib.pytypes import Message
+        from bbpb_cn.lib.pytypes import Message
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def _has_protobuf_structure(buf):
         if wt == wiretypes.FIXED64 and data_end - pos < 9:
             return False
         return True
-    except (DecoderException, BlackboxProtobufException, IndexError, Exception):
+    except (DecoderException, bbpb_cnException, IndexError, Exception):
         return False
 
 
@@ -365,9 +365,9 @@ def _encode_message_field(config, typedef, path, field_id, value):
             field_order=fielddef.field_order,
         )
     else:
-        if field_type not in blackboxprotobuf.lib.types.ENCODERS:
+        if field_type not in bbpb_cn.lib.types.ENCODERS:
             raise TypedefException("Unknown type: %s" % field_type)
-        field_encoder = blackboxprotobuf.lib.types.ENCODERS[field_type]
+        field_encoder = bbpb_cn.lib.types.ENCODERS[field_type]
         if field_encoder is None:
             raise TypedefException(
                 "Encoder not implemented for %s" % field_type, field_path
@@ -375,7 +375,7 @@ def _encode_message_field(config, typedef, path, field_id, value):
 
     # 编码标签（tag）
     tag = encode_tag(
-        int(field_number), blackboxprotobuf.lib.types.WIRETYPES[field_type]
+        int(field_number), bbpb_cn.lib.types.WIRETYPES[field_type]
     )
 
     outputs = []
@@ -466,7 +466,7 @@ def _decode_standard_field(wire_type, buffers, fielddef, config, field_path):
             continue
         if (
             not isinstance(field_type, six.string_types)
-            or blackboxprotobuf.lib.types.WIRETYPES[field_type] != wire_type
+            or bbpb_cn.lib.types.WIRETYPES[field_type] != wire_type
         ):
             raise DecoderException(
                 "Type %s from typedef did not match wiretype %s"
@@ -474,16 +474,16 @@ def _decode_standard_field(wire_type, buffers, fielddef, config, field_path):
                 path=field_path,
             )
 
-        if field_type not in blackboxprotobuf.lib.types.DECODERS:
+        if field_type not in bbpb_cn.lib.types.DECODERS:
             raise TypedefException(
                 "Type %s does not have a decoder" % (field_type),
                 path=field_path,
             )
-        decoder = blackboxprotobuf.lib.types.DECODERS[field_type]
+        decoder = bbpb_cn.lib.types.DECODERS[field_type]
         try:
             field_outputs = [decoder(buf, 0)[0] for buf in buffers]
             field_alt_type_id = alt_type_id
-        except BlackboxProtobufException as exc:
+        except bbpb_cnException as exc:
             # 解码出错，尝试下一个（如果有）
             continue
         # 解码成功
@@ -491,7 +491,7 @@ def _decode_standard_field(wire_type, buffers, fielddef, config, field_path):
 
     if field_outputs is None:
         field_type = config.get_default_type(wire_type)
-        default_decoder = blackboxprotobuf.lib.types.DECODERS[field_type]
+        default_decoder = bbpb_cn.lib.types.DECODERS[field_type]
 
         field_outputs = [default_decoder(buf, 0)[0] for buf in buffers]
 
@@ -800,7 +800,7 @@ def _try_decode_lendelim_fields(buffers, fielddef, config, path):
     for target_type in binary_fallbacks:
         try:
             outputs = []
-            decoder = blackboxprotobuf.lib.types.DECODERS[target_type]
+            decoder = bbpb_cn.lib.types.DECODERS[target_type]
             for buf in buffers:
                 output, _ = decoder(buf, 0)
                 outputs.append(output)

@@ -1,5 +1,5 @@
-import pytest
-import blackboxprotobuf
+﻿import pytest
+import bbpb_cn
 
 
 @pytest.mark.skip()
@@ -8,13 +8,13 @@ def test_wide():
 
     message = {"1": [1] * 10000000}
 
-    encoded = blackboxprotobuf.lib.encode_message(message, typedef)
-    decoded, _ = blackboxprotobuf.lib.decode_message(encoded, typedef)
+    encoded = bbpb_cn.lib.encode_message(message, typedef)
+    decoded, _ = bbpb_cn.lib.decode_message(encoded, typedef)
 
 
 @pytest.mark.skip()
 def test_deep():
-    config = blackboxprotobuf.lib.config.Config()
+    config = bbpb_cn.lib.config.Config()
 
     typedef = {
         "1": {"type": "message", "message_type_name": "test"},
@@ -32,13 +32,13 @@ def test_deep():
 
         target_depth -= 1
 
-    encoded = blackboxprotobuf.lib.encode_message(message, typedef, config)
-    decoded, _ = blackboxprotobuf.lib.decode_message(encoded, typedef, config)
+    encoded = bbpb_cn.lib.encode_message(message, typedef, config)
+    decoded, _ = bbpb_cn.lib.decode_message(encoded, typedef, config)
 
 
 @pytest.mark.skip()
 def test_large_multilayer():
-    config = blackboxprotobuf.lib.config.Config()
+    config = bbpb_cn.lib.config.Config()
 
     typedef = {
         "1": {"type": "message", "message_type_name": "test"},
@@ -56,5 +56,5 @@ def test_large_multilayer():
 
         target_depth -= 1
 
-    encoded = blackboxprotobuf.lib.encode_message(message, typedef, config)
-    decoded, _ = blackboxprotobuf.lib.decode_message(encoded, typedef, config)
+    encoded = bbpb_cn.lib.encode_message(message, typedef, config)
+    decoded, _ = bbpb_cn.lib.decode_message(encoded, typedef, config)

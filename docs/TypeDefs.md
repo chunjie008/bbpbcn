@@ -1,4 +1,4 @@
-# 类型定义
+﻿# 类型定义
 
 类型定义（也称为 typedef）是 BBPB 用来存储消息及其字段元数据的数据结构。它包含每个字段的确切类型以及字段名称等其他元数据。
 
@@ -66,7 +66,7 @@ type 字段是必需字段，应包含该字段的 BBPB 类型。这些类型大
 - `packed_sfixed64`
 - `packed_double`
 
-最新的类型列表也可在 [type_maps.py](/lib/blackboxprotobuf/lib/types/type_maps.py) 中找到。
+最新的类型列表也可在 [type_maps.py](/lib/bbpb_cn/lib/types/type_maps.py) 中找到。
 
 ### `name`
 
@@ -204,7 +204,7 @@ BBPB 不会为 length delimited 字段使用单一默认类型，而是首先尝
 
 虽然编辑类型定义可以用来更改现有字段的类型，但也可以更改特定 wire type 使用的默认类型。更改默认类型必须遵循与类型编辑相同的规则：新类型的 wire type 必须与原始 wire type 相同。
 
-wire type 的默认类型可以通过向解码器提供 `Config` 对象并使用 `default_types` 字典（位于 [config.py](/lib/blackboxprotobuf/lib/config.py#L49)）覆盖默认类型来修改。字典的键是 wire type，可以在 [wiretypes.py](/lib/blackboxprotobuf/lib/types/wiretypes.py) 中找到，并与 <https://protobuf.dev/programming-guides/encoding/#structure> 中的 wire type 匹配。
+wire type 的默认类型可以通过向解码器提供 `Config` 对象并使用 `default_types` 字典（位于 [config.py](/lib/bbpb_cn/lib/config.py#L49)）覆盖默认类型来修改。字典的键是 wire type，可以在 [wiretypes.py](/lib/bbpb_cn/lib/types/wiretypes.py) 中找到，并与 <https://protobuf.dev/programming-guides/encoding/#structure> 中的 wire type 匹配。
 
 例如：
 
@@ -212,7 +212,7 @@ wire type 的默认类型可以通过向解码器提供 `Config` 对象并使用
 config.default_types[wiretypes.FIXED64] = 'double'
 ~~~
 
-`Config` 中的 `default_types` 字段不用于 length delimited 类型，因为 length delimited 字段有特殊的回退逻辑。对于这些字段，你可以通过更改 `Config` 对象上的 `default_binary_type`（位于 [/lib/blackboxprotobuf/lib/config.py#L45](/lib/blackboxprotobuf/lib/config.py#L45)）来替换 `bytes` 回退类型。但与默认类型不同，解码器在回退到 `default_binary_type` 之前仍会尝试将字段解码为消息或字符串。
+`Config` 中的 `default_types` 字段不用于 length delimited 类型，因为 length delimited 字段有特殊的回退逻辑。对于这些字段，你可以通过更改 `Config` 对象上的 `default_binary_type`（位于 [/lib/bbpb_cn/lib/config.py#L45](/lib/bbpb_cn/lib/config.py#L45)）来替换 `bytes` 回退类型。但与默认类型不同，解码器在回退到 `default_binary_type` 之前仍会尝试将字段解码为消息或字符串。
 
 默认二进制类型主要用于允许更改二进制表示，例如 `bytes_hex` 而不是 `bytes`，但也可用于默认尝试 packed 类型。
 
@@ -220,7 +220,7 @@ config.default_types[wiretypes.FIXED64] = 'double'
 
 默认情况下，解码后的消息将使用字段编号作为字典键。但是，用户可以通过修改 "name" 字段为字段添加更具可读性的名称。
 
-"name" 字段将用作解码消息中的字典键。编码器接受原始字段编号或 typedef 的 "name" 字段中指定的名称。字段名称需要唯一，应为字母数字加下划线，但不能以数字开头（参见 [api.py](/lib/blackboxprotobuf/lib/api.py#L310) 中的正则表达式）。
+"name" 字段将用作解码消息中的字典键。编码器接受原始字段编号或 typedef 的 "name" 字段中指定的名称。字段名称需要唯一，应为字母数字加下划线，但不能以数字开头（参见 [api.py](/lib/bbpb_cn/lib/api.py#L310) 中的正则表达式）。
 
 ### 从头创建类型定义和字段
 

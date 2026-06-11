@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -13,7 +13,7 @@
 
 import zlib
 
-from blackboxprotobuf.lib.exceptions import BlackboxProtobufException
+from bbpb_cn.lib.exceptions import bbpb_cnException
 
 import six
 
@@ -32,7 +32,7 @@ def decode_gzip(buf):
         decompressor = zlib.decompressobj(31)
         return decompressor.decompress(buf), "gzip"
     else:
-        raise BlackboxProtobufException(
+        raise bbpb_cnException(
             "Cannot decode as gzip: magic bytes don't match"
         )
 
@@ -40,7 +40,7 @@ def decode_gzip(buf):
 def encode_gzip(buf):
     # type: (bytes | list[bytes]) -> bytes
     if isinstance(buf, list):
-        raise BlackboxProtobufException(
+        raise bbpb_cnException(
             "Cannot encode as gzip: multiple buffers are not supported"
         )
     compressor = zlib.compressobj(-1, zlib.DEFLATED, 31)

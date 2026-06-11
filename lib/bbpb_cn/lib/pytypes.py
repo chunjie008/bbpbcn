@@ -1,13 +1,4 @@
-"""`blackboxprotobuf` 提供了解码和编码二进制 protobuf 消息的 API。
-
-此模块重新导出 `blackboxprotobuf.lib.api` 中定义的函数，
-其提供了高级接口和便利函数。
-
-此模块分为两个子模块：
-
-    - `lib` 子模块包含解码/编码逻辑并提供一个 Python 接口。
-    - `burp` 子模块定义了 Burp Suite 插件和 UI。
-"""
+﻿"""此模块提供顶层类型，用于向 bbpb_cn 库添加类型定义。"""
 
 # 版权所有 (c) 2018-2024 NCC Group Plc
 #
@@ -22,4 +13,30 @@
 # 而产生的任何索赔、损害或其他责任承担责任，无论是合同行为、侵权行为还是其他
 # 行为。
 
-from blackboxprotobuf.lib.api import *
+import six
+
+
+if six.PY3:
+    from typing import Any, Dict, List, TypedDict
+
+    # 消息可以包含任何值
+    # 我们定义的函数可能有固定类型，但有人可能添加一个
+    # 输出任意对象的类型函数
+    Message = Dict[str | int, Any]
+
+    TypeDefDict = Dict[str, "FieldDefDict"]
+
+    FieldDefDict = TypedDict(
+        "FieldDefDict",
+        {
+            "name": str,
+            "type": str,
+            "message_type_name": str,
+            "message_typedef": TypeDefDict,
+            "alt_typedefs": Dict[str, str | TypeDefDict],
+            "example_value_ignored": Any,
+            "seen_repeated": bool,
+            "field_order": List[str],
+        },
+        total=False,
+    )

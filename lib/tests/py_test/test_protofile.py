@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -28,11 +28,11 @@ from hypothesis import given, assume, note, settings, HealthCheck
 import hypothesis.strategies as st
 import google.protobuf.json_format
 import strategies
-import blackboxprotobuf.lib
-import blackboxprotobuf.lib.protofile as protofile
-from blackboxprotobuf.lib.types import length_delim
-from blackboxprotobuf.lib.config import Config
-from blackboxprotobuf.lib.typedef import TypeDef
+import bbpb_cn.lib
+import bbpb_cn.lib.protofile as protofile
+from bbpb_cn.lib.types import length_delim
+from bbpb_cn.lib.config import Config
+from bbpb_cn.lib.typedef import TypeDef
 
 
 to_suppress = []
@@ -96,7 +96,7 @@ def test_proto_export_inverse(tmp_path, x, name):
         config.known_types.update(new_typedef_map)
         # 验证
         for name, typedef in new_typedef_map.items():
-            blackboxprotobuf.validate_typedef(typedef, config=config)
+            bbpb_cn.validate_typedef(typedef, config=config)
 
         def _check_field_types(typedef1, typedef2):
             for field_num in typedef1.keys():
@@ -176,7 +176,7 @@ def test_proto_import_examples():
         config.known_types = typedef_map_out
         for name, typedef in typedef_map_out.items():
             logging.debug("已知消息: %s" % config.known_types)
-            blackboxprotobuf.lib.validate_typedef(typedef, config=config)
+            bbpb_cn.lib.validate_typedef(typedef, config=config)
 
 
 @given(

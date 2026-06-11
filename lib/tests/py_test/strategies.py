@@ -1,4 +1,4 @@
-# 版权所有 (c) 2018-2024 NCC Group Plc
+﻿# 版权所有 (c) 2018-2024 NCC Group Plc
 #
 # 特此免费授予任何获得本软件及相关文档文件（“软件”）副本的人，不受限制地处理
 # 本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或
@@ -14,9 +14,9 @@
 import six
 import binascii
 import hypothesis.strategies as st
-import blackboxprotobuf
-from blackboxprotobuf.lib.types import varint
-from blackboxprotobuf.lib.types import type_maps
+import bbpb_cn
+from bbpb_cn.lib.types import varint
+from bbpb_cn.lib.types import type_maps
 
 from hypothesis import settings
 from hypothesis import database
@@ -52,7 +52,7 @@ def message_typedef_gen(draw, max_depth=3, anon=False, types=None, named_fields=
     # 预生成名称，确保名称唯一
     field_names = draw(
         st.lists(
-            st.from_regex(blackboxprotobuf.NAME_REGEX),
+            st.from_regex(bbpb_cn.NAME_REGEX),
             min_size=len(field_numbers),
             max_size=len(field_numbers),
             unique_by=lambda x: x.lower(),
