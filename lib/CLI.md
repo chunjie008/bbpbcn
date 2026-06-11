@@ -194,3 +194,41 @@ printf "01020304\n05060708" | bbpb convert -t int32_le
 bbpb convert -t int32_le --json 01020304
 echo "01020304" | bbpb convert -t int32_le --json
 ```
+
+### Packet Analyze
+
+The `analyze` subcommand analyzes multiple hex packets side-by-side to
+automatically detect header field structure: packet length, message ID, user
+ID, and protobuf payload boundaries. Useful for reverse engineering game
+protocols (TCP, UDP, WebSocket) without prior knowledge of the binary format.
+
+Input: two or more hex packet strings from the same protocol session. Each
+packet is parsed and compared byte-by-byte. The analyzer scores byte offsets
+for length field and msgid field candidates based on value range and
+correlation with packet size.
+
+Supported hex input formats: `01020304`, `01 02 03 04`, `01-02-03-04`,
+`0x01020304`.
+
+Options:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-e le/be` | Byte order (little-endian / big-endian) | `le` |
+| `--json` / `-j` | Output as JSON (machine-readable) | text output |
+
+Examples:
+
+```bash
+# Analyze three packets with little-endian byte order
+bbpb analyze -e le 0008000108D00F0110011801 0006000108960110011800 000A00020A047465737410021801
+
+# Hex packets from stdin (one per line)
+cat packets.txt | bbpb analyze -e le
+
+# JSON output for scripting
+bbpb analyze --json -e le 00080001 00060001
+
+# Big-endian game protocol
+bbpb analyze -e be 000100020304 000200050607
+```

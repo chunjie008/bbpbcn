@@ -31,6 +31,7 @@ from .lib.exceptions import BlackboxProtobufException
 from .lib import api
 from .lib import payloads
 from .lib import hexconvert
+from .lib import packetanalyzer
 from .lib.pytypes import TypeDefDict, Message
 
 
@@ -61,6 +62,30 @@ def _build_parser():
         "--json",
         action="store_true",
         dest="convert_json",
+        help="Output results as JSON",
+    )
+
+    analyze_parser = subparsers.add_parser(
+        "analyze", help="Analyze hex packets and detect structure (len, msgid, uid, protobuf)"
+    )
+    analyze_parser.add_argument(
+        "packets",
+        nargs="*",
+        help="Hex packet strings (reads from stdin if not provided). "
+        "Supports formats: 01020304, 01 02 03 04, 01-02-03-04, 0x01020304",
+    )
+    analyze_parser.add_argument(
+        "-e",
+        "--endian",
+        choices=["le", "be"],
+        default="le",
+        help="Byte order (default: le)",
+    )
+    analyze_parser.add_argument(
+        "-j",
+        "--json",
+        action="store_true",
+        dest="analyze_json",
         help="Output results as JSON",
     )
 
@@ -115,6 +140,9 @@ def main():
 
     if args.command == "convert":
         return _convert(args)
+
+    if args.command == "analyze":
+        return _analyze(args)
 
     # Original protobuf decode/encode logic
 
@@ -195,6 +223,31 @@ def _convert(args):
         output = hexconvert.convert_hex_lines(lines, args.convert_type, args.convert_json)
         sys.stdout.write(output + "\n")
     return 0
+
+
+def _analyze(args):
+    # type: (argparse.Namespace) -> int
+    if args.packets:
+        hex_strings = args.packets
+    else:
+        hex_strings = [
+            line.strip()
+            for line in sys.stdin.read().strip().splitlines()
+            if line.strip()
+        ]
+    if not hex_strings:
+        sys.stderr.write("Error: no hex packets provided\n")
+        return 1
+    try:
+        result = packetanalyzer.analyze_packets(hex_strings, args.endian)
+        if args.analyze_json:
+            sys.stdout.write(packetanalyzer.format_json(result))
+        else:
+            sys.stdout.write(packetanalyzer.format_text(result))
+        return 0
+    except (ValueError, binascii.Error) as e:
+        sys.stderr.write("Error: %s\n" % e)
+        return 1
 
 
 # Reads input from the location from args
