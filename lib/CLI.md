@@ -144,3 +144,53 @@ for other encoding options.
 
 The payload encoding process can be overridden during decoding or encoding with
 the `-pe`/`--payload-encoding` argument.
+
+### Hex Convert
+
+The `convert` subcommand converts hex strings to various data types (integers,
+floats, strings, etc.) independently of protobuf. Useful for analyzing TCP
+binary protocols, network dumps, or any hex-encoded data.
+
+Supported hex input formats: `01020304`, `01 02 03 04`, `01-02-03-04`,
+`0x01020304`.
+
+Supported types:
+
+| Type | Description | Bytes |
+|------|-------------|-------|
+| `int8` / `uint8` | 8-bit integer | 1 |
+| `int16_le/be` / `uint16_le/be` | 16-bit integer (little/big endian) | 2 |
+| `int24_le/be` / `uint24_le/be` | 24-bit integer (little/big endian) | 3 |
+| `int32_le/be` / `uint32_le/be` | 32-bit integer (little/big endian) | 4 |
+| `int64_le/be` / `uint64_le/be` | 64-bit integer (little/big endian) | 8 |
+| `float_le/be` | 32-bit floating point | 4 |
+| `double_le/be` | 64-bit floating point | 8 |
+| `string` | UTF-8 string | variable |
+| `hex_raw` | Normalized hex output | - |
+| `bits` | Binary representation | - |
+
+Examples:
+
+```bash
+# Single hex string from argument
+bbpb convert -t int32_le 01020304
+
+# Hex string as float (little endian)
+bbpb convert -t float_le 0000803f
+
+# Hex string as UTF-8 string
+bbpb convert -t string 48656c6c6f
+
+# Big endian variant
+bbpb convert -t int32_be 01020304
+
+# Hex input from stdin pipe
+echo "01020304" | bbpb convert -t int32_le
+
+# Multiple hex values from stdin (one per line)
+printf "01020304\n05060708" | bbpb convert -t int32_le
+
+# JSON output
+bbpb convert -t int32_le --json 01020304
+echo "01020304" | bbpb convert -t int32_le --json
+```

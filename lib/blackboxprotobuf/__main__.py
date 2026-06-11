@@ -21,6 +21,7 @@
 import sys
 import json
 import base64
+import binascii
 import argparse
 
 import typing
@@ -29,12 +30,40 @@ from typing import Any, Dict, Optional, Tuple
 from .lib.exceptions import BlackboxProtobufException
 from .lib import api
 from .lib import payloads
+from .lib import hexconvert
 from .lib.pytypes import TypeDefDict, Message
 
 
-def main():
-    # type: () -> int
-    parser = argparse.ArgumentParser(description="Decode/Encode Protobuf Messages")
+def _build_parser():
+    # type: () -> argparse.ArgumentParser
+    parser = argparse.ArgumentParser(description="Blackbox Protobuf CLI")
+    subparsers = parser.add_subparsers(dest="command")
+
+    convert_parser = subparsers.add_parser(
+        "convert", help="Convert hex string to various types (int, float, string, etc.)"
+    )
+    convert_parser.add_argument(
+        "hex_str",
+        nargs="?",
+        help="Hex string to convert (reads from stdin if not provided). "
+        "Supports formats: 01020304, 01 02 03 04, 01-02-03-04, 0x01020304",
+    )
+    convert_parser.add_argument(
+        "-t",
+        "--type",
+        required=True,
+        dest="convert_type",
+        choices=sorted(hexconvert.TYPE_MAP.keys()) + ["string", "hex_raw", "bits"],
+        help="Target type for conversion",
+    )
+    convert_parser.add_argument(
+        "-j",
+        "--json",
+        action="store_true",
+        dest="convert_json",
+        help="Output results as JSON",
+    )
+
     parser.add_argument(
         "-e",
         "--encode",
@@ -76,8 +105,18 @@ def main():
         action="store_true",
         help="(Decoding) Output just the decoded JSON and no type information.",
     )
+    return parser
 
+
+def main():
+    # type: () -> int
+    parser = _build_parser()
     args = parser.parse_args()
+
+    if args.command == "convert":
+        return _convert(args)
+
+    # Original protobuf decode/encode logic
 
     message = None  # type:  str | bytes | Message | None
     typedef = None  # type: TypeDefDict | None
@@ -122,6 +161,40 @@ def main():
             sys.stderr.write("Error did not get a valid message to decode")
             return 1
         return _decode(args, message, typedef, payload_encoding)
+
+
+def _convert(args):
+    # type: (argparse.Namespace) -> int
+    if args.hex_str:
+        try:
+            result = hexconvert.convert_hex(args.hex_str, args.convert_type)
+            if args.convert_json:
+                sys.stdout.write(
+                    json.dumps(
+                        {
+                            "hex": args.hex_str,
+                            "type": args.convert_type,
+                            "value": result,
+                        },
+                        indent=2,
+                        ensure_ascii=False,
+                        default=str,
+                    )
+                    + "\n"
+                )
+            else:
+                sys.stdout.write(str(result) + "\n")
+        except (ValueError, binascii.Error) as e:
+            sys.stderr.write("Error: %s\n" % e)
+            return 1
+    else:
+        lines = sys.stdin.read().strip().splitlines()
+        if not lines:
+            sys.stderr.write("Error: No hex input provided\n")
+            return 1
+        output = hexconvert.convert_hex_lines(lines, args.convert_type, args.convert_json)
+        sys.stdout.write(output + "\n")
+    return 0
 
 
 # Reads input from the location from args
