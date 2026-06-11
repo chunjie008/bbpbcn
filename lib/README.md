@@ -67,7 +67,7 @@ import base64
 data = base64.b64decode('KglNb2RpZnkgTWU=')
 message,typedef = blackboxprotobuf.decode_message(data)
 
-message[5] = 'Modified Me'
+message['5'] = 'Modified Me'
 
 data = blackboxprotobuf.encode_message(message,typedef)
 print(data)
