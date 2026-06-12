@@ -12,6 +12,71 @@ Protobuf 是 Google 推出的一种二进制序列化格式，可作为 JSON 或
 
 bbpbcn 旨在在没有消息定义的情况下处理 protocol buffers。它 fork 自 NCC Group 的 blackboxprotobuf，增强了类型推测能力并提供了完整的中文注释。
 
+## 安装
+
+### 从 PyPI 安装
+
+```bash
+pip install bbpbcn
+```
+
+### 源码安装（离线/本地构建）
+
+```bash
+# 克隆仓库后，进入 CLI 库目录
+cd lib/
+
+# 方法 A：pip 直接安装
+pip install .
+
+# 方法 B：构建 wheel 再安装
+pip install build
+python -m build --wheel
+pip install dist/bbpbcn-*.whl
+
+# 方法 C：Poetry 构建
+pip install poetry
+poetry build
+pip install dist/bbpbcn-*.whl
+
+# 验证安装
+bbpbcn --help
+python -m bbpbcn --help
+```
+
+依赖仅 `six`，纯 Python，无 C 扩展，无需编译。
+
+### 离线打包（无网络机器）
+
+在联网机器上：
+
+```bash
+cd lib/
+pip install build
+python -m build --wheel
+pip download six -d dist/
+```
+
+将 `dist/` 复制到目标机器：
+
+```bash
+pip install --no-index --find-links=./dist bbpbcn
+```
+
+## Skill 注册（AI 工具）
+
+将此项目注册为 Kilo AI skill，让 AI agent 自动理解 bbpbcn 的用法并调用它处理 protobuf 数据：
+
+```bash
+# 全局注册（推荐）
+mkdir -p ~/.config/kilo/skills/bbpbcn
+cp SKILL.md ~/.config/kilo/skills/bbpbcn/
+
+# 项目级注册
+mkdir -p .kilo/skills/bbpbcn
+cp SKILL.md .kilo/skills/bbpbcn/
+```
+
 ## 工具
 
 本仓库包含多个用于处理 protocol buffers 的接口：
