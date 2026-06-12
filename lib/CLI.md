@@ -172,3 +172,161 @@ bbpbcn analyze --json -e le 00080001 00060001
 # 大端游戏协议
 bbpbcn analyze -e be 000100020304 000200050607
 ```
+
+### 消息对比
+
+`diff` 子命令对比两个 protobuf 消息的字段差异，支持 hex 和 JSON 两种输入模式。适用于分析同一个操作在不同条件下的请求/响应差异。
+
+```
+bbpbcn diff <msg1_hex> <msg2_hex>                      # hex 模式（自动解码再对比）
+bbpbcn diff --json-input <json1> <json2>                # JSON 模式（直接对比解析后的 dict）
+bbpbcn diff <hex1> <hex2> -t typedef.json               # 指定 typedef 辅助解码
+bbpbcn diff <hex1> <hex2> -j                            # JSON 格式输出差异结果
+```
+
+默认输出：
+```
+  字段差异:
+    + level: 5
+    - name: "alice"
+    ~ score: 100 -> 200
+```
+
+选项：
+
+| 选项 | 描述 |
+|------|------|
+| `-t` / `--typedef` | 用于解码的 typedef JSON 文件路径 |
+| `--json-input` | 输入已经是解码后的 JSON 而非 hex |
+| `-j` / `--json` | 以 JSON 格式输出差异结果 |
+
+示例：
+
+```bash
+# 对比 hex 消息的字段差异
+bbpbcn diff 08D00F10C401 08D00F10C801
+
+# 对比已解码的 JSON 消息
+bbpbcn diff --json-input '{"name":"alice"}' '{"name":"bob","level":1}'
+
+# JSON 格式输出
+bbpbcn diff 08D00F10C401 08D00F10C801 --json
+
+# 使用 typedef 辅助解码后的对比
+bbpbcn diff 08D00F10C401 08D00F10C801 -t ./saved_type.json
+```
+
+### .proto 文件导入/导出
+
+`proto` 子命令在 bbpbcn typedef 格式与标准 `.proto` 文件之间转换，便于与其他 protobuf 工具链（protoc、protobuf-net 等）互通。
+
+```
+bbpbcn proto export -i <typedef.json> [-n <name>] [-p <package>]   # typedef → .proto
+bbpbcn proto import -i <file.proto> [--save]                       # .proto → typedef
+```
+
+选项：
+
+| 选项 | 描述 |
+|------|------|
+| `-i` / `--input` | 输入文件路径 |
+| `-n` / `--name` | 消息名称（当 typedef 为裸字典时使用） |
+| `-p` / `--package` | proto 包名 |
+| `--save` | （import）直接保存到 known_types 配置，不输出到 stdout |
+
+示例：
+
+```bash
+# 将 typedef 导出为 .proto
+bbpbcn proto export -i typedef.json -n MyMessage
+bbpbcn proto export -i typedef.json -n MyMessage -p my.package > message.proto
+
+# 从 .proto 文件导入 typedef
+bbpbcn proto import -i message.proto
+
+# 导入并保存到 known_types
+bbpbcn proto import -i message.proto --save
+```
+
+### 持久化数据库
+
+`db` 子命令将分析结果持久化到 SQLite 数据库，支持有状态的渐进式分析流程。数据存储在 `$CWD/.bbpbcn/bbpb.db`，可通过 `BBPB_CN_DB_DIR` 环境变量覆盖存储目录。
+
+```
+bbpbcn db init                                             # 初始化数据库
+bbpbcn db import <hex> -m <msgid> -p <project>             # 导入一条封包
+bbpbcn db import-dir <dir> -m <msgid> -p <project>         # 批量导入目录中的 .hex 文件
+bbpbcn db list [-p <project>] [--status <status>] [-l N]   # 列出消息
+bbpbcn db get <id>                                         # 查看消息详情
+bbpbcn db update <id> --<field> <value>                    # 更新字段
+bbpbcn db delete <id>                                      # 删除消息
+bbpbcn db search <keyword>                                 # 全文搜索
+bbpbcn db stats [-p <project>]                             # 统计信息
+bbpbcn db export [-p <project>] [-f proto|json]            # 导出 typedef
+bbpbcn db history <id>                                     # typedef 变更历史
+bbpbcn db session create -p <project> -n <name>            # 创建分析会话
+bbpbcn db session list                                     # 列出会话
+bbpbcn db session get <id>                                 # 查看会话详情
+bbpbcn db session delete <id>                              # 删除会话
+```
+
+可用字段（import / update）：
+
+| 字段 | 说明 |
+|------|------|
+| `-m` / `--msgid` | 消息 ID |
+| `-p` / `--project` | 项目/游戏名 |
+| `-d` / `--direction` | 方向（如 C2S / S2C） |
+| `-D` / `--describe` | 功能描述 |
+| `-r` / `--remark` | 备注 |
+| `--status` | 状态（pending / analyzing / confirmed） |
+| `--hex` | hex payload |
+| `--typedef` | typedef JSON 文件路径 |
+
+数据库表结构：
+
+- `messages` — 主表：project, msgid, direction, hex, typedef, describe, remark, status, 时间戳
+- `typedef_history` — typedef 变更记录（每次更新自动保存快照 + 版本号）
+- `sessions` — 分析会话：project, name, msg_ids, notes
+
+示例：
+
+```bash
+# 初始化
+bbpbcn db init
+
+# 导入批包
+bbpbcn db import 08D00F10C401 -m 1001 -p "game_x" -d "C2S" -D "心跳包"
+bbpbcn db import 08D00F10C801 -m 1002 -p "game_x" -d "C2S" -D "登录请求"
+
+# 查看列表
+bbpbcn db list -p game_x
+bbpbcn db list --status pending
+
+# 查看详情
+bbpbcn db get 1
+bbpbcn db get 1 --json
+
+# 更新 typedef 和状态（auto-saved to history）
+bbpbcn db update 1 --typedef ./refined.json --status confirmed
+bbpbcn db update 1 --remark "已确认是心跳"
+
+# 搜索
+bbpbcn db search 心跳
+bbpbcn db search 1001
+
+# 统计
+bbpbcn db stats -p game_x
+
+# 导出整个项目为 .proto
+bbpbcn db export -p game_x -f proto
+
+# 查看 typedef 版本历史
+bbpbcn db history 1
+
+# 创建分析会话
+bbpbcn db session create -p game_x -n "第一轮分析" -m "1,2"
+
+# 批量导入 hex 文件目录
+bbpbcn db import-dir ./captures/ -m 2001 -p game_x
+```

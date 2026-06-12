@@ -16,6 +16,7 @@ import json
 import base64
 import binascii
 import argparse
+import io
 
 import typing
 from typing import Any, Dict, Optional, Tuple
@@ -23,6 +24,9 @@ from typing import Any, Dict, Optional, Tuple
 from .lib.exceptions import bbpbcnException
 from .lib import api
 from .lib import payloads
+from .lib import packdiff
+from .lib import protofile
+from .lib import db
 from .lib import hexconvert
 from .lib import packetanalyzer
 from .lib.pytypes import TypeDefDict, Message
@@ -82,6 +86,84 @@ def _build_parser():
         help="以 JSON 格式输出结果",
     )
 
+    diff_parser = subparsers.add_parser(
+        "diff", help="对比两个 protobuf 消息的字段差异"
+    )
+    diff_parser.add_argument(
+        "msg1",
+        help="第一个消息（hex 字符串，或 --json-input 时的 JSON 字符串）",
+    )
+    diff_parser.add_argument(
+        "msg2",
+        help="第二个消息（hex 字符串，或 --json-input 时的 JSON 字符串）",
+    )
+    diff_parser.add_argument(
+        "-t",
+        "--typedef",
+        dest="diff_typedef",
+        help="用于解码的 typedef JSON 文件",
+    )
+    diff_parser.add_argument(
+        "--json-input",
+        action="store_true",
+        dest="diff_json_input",
+        help="输入已经是解码后的 JSON 消息而非 hex",
+    )
+    diff_parser.add_argument(
+        "-j",
+        "--json",
+        action="store_true",
+        dest="diff_json_output",
+        help="以 JSON 格式输出差异结果",
+    )
+
+    proto_parser = subparsers.add_parser(
+        "proto", help="导入/导出 .proto 文件"
+    )
+    proto_subparsers = proto_parser.add_subparsers(dest="proto_action")
+
+    proto_export_parser = proto_subparsers.add_parser(
+        "export", help="将 typedef 导出为 .proto 格式"
+    )
+    proto_export_parser.add_argument(
+        "-i",
+        "--input",
+        required=True,
+        dest="proto_input",
+        help="输入的 typedef JSON 文件",
+    )
+    proto_export_parser.add_argument(
+        "-n",
+        "--name",
+        dest="proto_name",
+        help="消息名称（当 typedef 为裸字典时使用）",
+    )
+    proto_export_parser.add_argument(
+        "-p",
+        "--package",
+        dest="proto_package",
+        help="proto 包名",
+    )
+
+    proto_import_parser = proto_subparsers.add_parser(
+        "import", help="从 .proto 文件导入 typedef"
+    )
+    proto_import_parser.add_argument(
+        "-i",
+        "--input",
+        required=True,
+        dest="proto_input",
+        help="输入的 .proto 文件",
+    )
+    proto_import_parser.add_argument(
+        "--save",
+        action="store_true",
+        dest="proto_save",
+        help="保存到 known_types 配置中",
+    )
+
+    _db_build_parser(subparsers)
+
     parser.add_argument(
         "-e",
         "--encode",
@@ -136,6 +218,15 @@ def main():
 
     if args.command == "analyze":
         return _analyze(args)
+
+    if args.command == "diff":
+        return _diff(args)
+
+    if args.command == "proto":
+        return _proto(args)
+
+    if args.command == "db":
+        return _db(args)
 
     # 原始的 protobuf 解码/编码逻辑
 
@@ -241,6 +332,427 @@ def _analyze(args):
     except (ValueError, binascii.Error) as e:
         sys.stderr.write("错误：%s\n" % e)
         return 1
+
+
+def _diff(args):
+    # type: (argparse.Namespace) -> int
+    try:
+        if args.diff_json_input:
+            msg1 = json.loads(args.msg1)
+            msg2 = json.loads(args.msg2)
+        else:
+            typedef = None
+            if args.diff_typedef:
+                with open(args.diff_typedef, "r") as f:
+                    typedef = json.load(f)
+            raw1 = binascii.unhexlify(args.msg1.replace(" ", "").replace("-", "").replace("0x", "").replace("0X", ""))
+            raw2 = binascii.unhexlify(args.msg2.replace(" ", "").replace("-", "").replace("0x", "").replace("0X", ""))
+            msg1_json, _ = api.protobuf_to_json(raw1, typedef)
+            msg2_json, _ = api.protobuf_to_json(raw2, typedef)
+            msg1 = json.loads(msg1_json)
+            msg2 = json.loads(msg2_json)
+
+        changes = packdiff.diff_messages(msg1, msg2)
+
+        if args.diff_json_output:
+            sys.stdout.write(packdiff.format_json(changes))
+        else:
+            sys.stdout.write(packdiff.format_diff(changes))
+        return 0
+    except (ValueError, binascii.Error) as e:
+        sys.stderr.write("错误：%s\n" % e)
+        return 1
+
+
+def _proto(args):
+    # type: (argparse.Namespace) -> int
+    try:
+        if args.proto_action == "export":
+            with open(args.proto_input, "r") as f:
+                data = json.load(f)
+
+            typedef_map = {}  # type: Dict[str, TypeDefDict]
+            if args.proto_name:
+                typedef_map[args.proto_name] = data
+            elif isinstance(data, dict) and all(isinstance(v, dict) for v in data.values()):
+                typedef_map = data
+            else:
+                sys.stderr.write("错误：请使用 -n 指定消息名称\n")
+                return 1
+
+            output = protofile.export_proto(typedef_map, package=args.proto_package)
+            if output:
+                sys.stdout.write(output)
+            return 0
+
+        elif args.proto_action == "import":
+            result = api.import_protofile(args.proto_input, save_to_known=args.proto_save)
+            if not args.proto_save and result:
+                sys.stdout.write(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+            return 0
+
+        else:
+            sys.stderr.write("错误：请指定 proto 操作：export 或 import\n")
+            return 1
+
+    except (ValueError, IOError, Exception) as e:
+        sys.stderr.write("错误：%s\n" % e)
+        return 1
+
+
+def _db_build_parser(subparsers):
+    # type: (argparse._SubParsersAction) -> None
+    db_parser = subparsers.add_parser("db", help="持久化数据库管理")
+    db_sub = db_parser.add_subparsers(dest="db_action")
+
+    db_sub.add_parser("init", help="初始化数据库（创建表）")
+
+    import_parser = db_sub.add_parser("import", help="导入一条 hex 封包")
+    import_parser.add_argument("hex", nargs="?", help="hex 字符串（未提供时从 stdin 读取）")
+    import_parser.add_argument("-m", "--msgid", type=int, default=0, help="消息 ID")
+    import_parser.add_argument("-p", "--project", default="", help="项目/游戏名")
+    import_parser.add_argument("-d", "--direction", default="", help="方向 (C2S/S2C)")
+    import_parser.add_argument("-D", "--describe", default="", help="功能描述")
+    import_parser.add_argument("-r", "--remark", default="", help="备注")
+
+    importdir_parser = db_sub.add_parser("import-dir", help="批量导入目录中的 hex 文件")
+    importdir_parser.add_argument("dir", help="目录路径")
+    importdir_parser.add_argument("-m", "--msgid", type=int, required=True, help="消息 ID")
+    importdir_parser.add_argument("-p", "--project", default="", help="项目/游戏名")
+    importdir_parser.add_argument("-d", "--direction", default="", help="方向 (C2S/S2C)")
+
+    list_parser = db_sub.add_parser("list", help="列出消息")
+    list_parser.add_argument("-p", "--project", default="", help="按项目筛选")
+    list_parser.add_argument("--status", default="", help="按状态筛选 (pending/analyzing/confirmed)")
+    list_parser.add_argument("-m", "--msgid", type=int, default=None, help="按 msgid 筛选")
+    list_parser.add_argument("-l", "--limit", type=int, default=50, help="限制条数")
+    list_parser.add_argument("--json", action="store_true", dest="list_json", help="JSON 输出")
+
+    get_parser = db_sub.add_parser("get", help="查看单条消息详情")
+    get_parser.add_argument("id", type=int, help="消息 ID")
+    get_parser.add_argument("--json", action="store_true", dest="get_json", help="JSON 输出")
+
+    update_parser = db_sub.add_parser("update", help="更新消息字段")
+    update_parser.add_argument("id", type=int, help="消息 ID")
+    update_parser.add_argument("--project", help="项目名")
+    update_parser.add_argument("--msgid", type=int, help="消息 ID")
+    update_parser.add_argument("--direction", help="方向")
+    update_parser.add_argument("--hex", help="hex payload")
+    update_parser.add_argument("--typedef", dest="update_typedef", help="typedef JSON 文件路径")
+    update_parser.add_argument("--describe", help="功能描述")
+    update_parser.add_argument("--remark", help="备注")
+    update_parser.add_argument("--status", choices=["pending", "analyzing", "confirmed"], help="状态")
+
+    delete_parser = db_sub.add_parser("delete", help="删除消息")
+    delete_parser.add_argument("id", type=int, help="消息 ID")
+
+    search_parser = db_sub.add_parser("search", help="全文搜索")
+    search_parser.add_argument("keyword", help="搜索关键词")
+    search_parser.add_argument("-p", "--project", default="", help="按项目限定")
+    search_parser.add_argument("--json", action="store_true", dest="search_json", help="JSON 输出")
+
+    stats_parser = db_sub.add_parser("stats", help="统计信息")
+    stats_parser.add_argument("-p", "--project", default="", help="按项目统计")
+    stats_parser.add_argument("--json", action="store_true", dest="stats_json", help="JSON 输出")
+
+    export_parser = db_sub.add_parser("export", help="导出 typedef")
+    export_parser.add_argument("--id", type=int, dest="export_id", help="单条消息 ID")
+    export_parser.add_argument("-p", "--project", default="", help="按项目导出")
+    export_parser.add_argument("-f", "--format", choices=["proto", "json"], default="proto", dest="export_format", help="导出格式")
+
+    history_parser = db_sub.add_parser("history", help="typedef 变更历史")
+    history_parser.add_argument("id", type=int, help="消息 ID")
+    history_parser.add_argument("--json", action="store_true", dest="history_json", help="JSON 输出")
+
+    session_parser = db_sub.add_parser("session", help="分析会话管理")
+    session_sub = session_parser.add_subparsers(dest="session_action")
+
+    sc_parser = session_sub.add_parser("create", help="创建会话")
+    sc_parser.add_argument("-p", "--project", required=True, help="项目名")
+    sc_parser.add_argument("-n", "--name", required=True, help="会话名称")
+    sc_parser.add_argument("-m", "--msg-ids", dest="msg_ids", help="关联的消息 ID 列表，逗号分隔")
+    sc_parser.add_argument("--notes", default="", help="备注")
+
+    sl_parser = session_sub.add_parser("list", help="列出会话")
+    sl_parser.add_argument("-p", "--project", default="", help="按项目筛选")
+    sl_parser.add_argument("--json", action="store_true", dest="slist_json", help="JSON 输出")
+
+    sg_parser = session_sub.add_parser("get", help="查看会话详情")
+    sg_parser.add_argument("id", type=int, help="会话 ID")
+    sg_parser.add_argument("--json", action="store_true", dest="sget_json", help="JSON 输出")
+
+    sd_parser = session_sub.add_parser("delete", help="删除会话")
+    sd_parser.add_argument("id", type=int, help="会话 ID")
+
+
+def _db(args):
+    # type: (argparse.Namespace) -> int
+    d = db.BbpDB()
+    try:
+        if args.db_action == "init":
+            sys.stdout.write("数据库已就绪: %s\n" % d.db_path)
+            return 0
+
+        if args.db_action == "import":
+            hex_str = args.hex
+            if not hex_str:
+                hex_str = sys.stdin.read().strip()
+            if not hex_str:
+                sys.stderr.write("错误：未提供 hex 输入\n")
+                return 1
+            hex_str = _clean_hex(hex_str)
+            mid = d.insert_message(
+                hex=hex_str,
+                msgid=args.msgid,
+                project=args.project,
+                direction=args.direction,
+                describe=args.describe,
+                remark=args.remark,
+            )
+            sys.stdout.write("已导入: id=%d  msgid=%d  project=%s\n" % (mid, args.msgid, args.project or "(无)"))
+            return 0
+
+        if args.db_action == "import-dir":
+            import os
+            import glob
+            if not os.path.isdir(args.dir):
+                sys.stderr.write("错误：目录不存在: %s\n" % args.dir)
+                return 1
+            files = sorted(glob.glob(os.path.join(args.dir, "*.hex"))) or sorted(os.listdir(args.dir))
+            count = 0
+            for fname in files:
+                fpath = os.path.join(args.dir, fname) if not os.path.isabs(fname) else fname
+                if not os.path.isfile(fpath):
+                    continue
+                with open(fpath, "r") as f:
+                    h = f.read().strip()
+                h = _clean_hex(h)
+                if not h:
+                    continue
+                d.insert_message(hex=h, msgid=args.msgid, project=args.project, direction=args.direction)
+                count += 1
+            sys.stdout.write("已导入 %d 条 (msgid=%d, project=%s)\n" % (count, args.msgid, args.project or "(无)"))
+            return 0
+
+        if args.db_action == "list":
+            rows = d.list_messages(
+                project=args.project or None,
+                status=args.status or None,
+                msgid=args.msgid,
+                limit=args.limit,
+            )
+            if args.list_json:
+                _db_dump_json([dict(r) for r in rows])
+            else:
+                _db_print_list(rows)
+            return 0
+
+        if args.db_action == "get":
+            row = d.get_message(args.id)
+            if not row:
+                sys.stderr.write("错误：未找到 id=%d\n" % args.id)
+                return 1
+            if args.get_json:
+                _db_dump_json(dict(row))
+            else:
+                _db_print_detail(row)
+            return 0
+
+        if args.db_action == "update":
+            updates = {}
+            for src, dst in [
+                ("project", "project"), ("msgid", "msgid"),
+                ("direction", "direction"), ("hex", "hex"),
+                ("describe", "describe"), ("remark", "remark"),
+                ("status", "status"),
+            ]:
+                v = getattr(args, src, None)
+                if v is not None:
+                    updates[dst] = v
+            if args.update_typedef:
+                with open(args.update_typedef, "r") as f:
+                    updates["typedef"] = f.read()
+            if not updates:
+                sys.stderr.write("错误：未指定要更新的字段\n")
+                return 1
+            ok = d.update_message(args.id, **updates)
+            sys.stdout.write(("已更新 id=%d\n" if ok else "错误：未找到 id=%d\n") % args.id)
+            return 0 if ok else 1
+
+        if args.db_action == "delete":
+            ok = d.delete_message(args.id)
+            sys.stdout.write(("已删除 id=%d\n" if ok else "错误：未找到 id=%d\n") % args.id)
+            return 0 if ok else 1
+
+        if args.db_action == "search":
+            rows = d.search_messages(args.keyword, project=args.project or None)
+            if args.search_json:
+                _db_dump_json([dict(r) for r in rows])
+            else:
+                _db_print_list(rows)
+            return 0
+
+        if args.db_action == "stats":
+            s = d.stats(project=args.project or None)
+            if args.stats_json:
+                _db_dump_json(s)
+            else:
+                _db_print_stats(s, project=args.project or None)
+            return 0
+
+        if args.db_action == "export":
+            if args.export_id:
+                typedefs = d.export_typedefs(message_ids=[args.export_id])
+            else:
+                typedefs = d.export_typedefs(project=args.project or None)
+            if args.export_format == "proto":
+                out = protofile.export_proto(typedefs)
+                if out:
+                    sys.stdout.write(out)
+            else:
+                _db_dump_json(typedefs)
+            return 0
+
+        if args.db_action == "history":
+            rows = d.get_history(args.id)
+            if args.history_json:
+                _db_dump_json([dict(r) for r in rows])
+            elif not rows:
+                sys.stdout.write("  id=%d 无 typedef 变更历史\n" % args.id)
+            else:
+                sys.stdout.write("  typedef 变更历史 (id=%d):\n" % args.id)
+                for r in rows:
+                    sys.stdout.write("    v%d (%s):\n" % (r["version"], r["changed_at"]))
+                    fmt = _db_pretty_typedef(r["typedef"])
+                    for L in fmt.split("\n"):
+                        sys.stdout.write("      %s\n" % L)
+            return 0
+
+        if args.db_action == "session":
+            return _db_session(args, d)
+
+        sys.stderr.write("错误：未知的 db 操作: %s\n" % args.db_action)
+        return 1
+    finally:
+        d.close()
+
+
+def _db_session(args, d):
+    # type: (argparse.Namespace, db.BbpDB) -> int
+    if args.session_action == "create":
+        msg_ids = [int(x.strip()) for x in args.msg_ids.split(",")] if args.msg_ids else []
+        sid = d.create_session(project=args.project, name=args.name, msg_ids=msg_ids, notes=args.notes)
+        sys.stdout.write("已创建会话: id=%d  %s/%s\n" % (sid, args.project, args.name))
+        return 0
+
+    if args.session_action == "list":
+        rows = d.list_sessions(project=args.project or None)
+        if args.slist_json:
+            _db_dump_json([dict(r) for r in rows])
+        elif not rows:
+            sys.stdout.write("  (无会话)\n")
+        else:
+            sys.stdout.write("  会话列表:\n")
+            for r in rows:
+                sys.stdout.write("    #%-4d  %-20s  %s\n" % (r["id"], r["name"], r["project"]))
+        return 0
+
+    if args.session_action == "get":
+        row = d.get_session(args.id)
+        if not row:
+            sys.stderr.write("错误：未找到会话 id=%d\n" % args.id)
+            return 1
+        if args.sget_json:
+            _db_dump_json(dict(row))
+        else:
+            sys.stdout.write("  会话 (id=%d):\n" % row["id"])
+            sys.stdout.write("    项目: %s\n" % row["project"])
+            sys.stdout.write("    名称: %s\n" % row["name"])
+            sys.stdout.write("    消息: %s\n" % row["msg_ids"])
+            sys.stdout.write("    备注: %s\n" % row["notes"])
+            sys.stdout.write("    创建: %s\n" % row["created_at"])
+        return 0
+
+    if args.session_action == "delete":
+        ok = d.delete_session(args.id)
+        sys.stdout.write(("已删除会话 id=%d\n" if ok else "未找到会话 id=%d\n") % args.id)
+        return 0
+
+    sys.stderr.write("错误：请指定 session 操作\n")
+    return 1
+
+
+# ── db 辅助函数 ──
+
+def _clean_hex(s):
+    # type: (str) -> str
+    return s.replace(" ", "").replace("-", "").replace("\n", "").replace("\r", "").replace("\t", "")
+
+
+def _db_dump_json(data):
+    # type: (object) -> None
+    sys.stdout.write(json.dumps(data, indent=2, ensure_ascii=False, default=str) + "\n")
+
+
+def _db_print_list(rows):
+    # type: (list[sqlite3.Row]) -> None
+    if not rows:
+        sys.stdout.write("  (无记录)\n")
+        return
+    sys.stdout.write("  %-4s  %-6s  %-18s  %-10s  %s\n" % ("ID", "MSGID", "PROJECT", "STATUS", "DESCRIBE"))
+    sys.stdout.write("  " + "-" * 70 + "\n")
+    for r in rows:
+        sys.stdout.write("  %-4d  %-6d  %-18s  %-10s  %s\n" % (
+            r["id"], r["msgid"], r["project"][:18], r["status"], r["describe"][:30],
+        ))
+
+
+def _db_print_detail(row):
+    # type: (sqlite3.Row) -> None
+    sys.stdout.write("  id:        %d\n" % row["id"])
+    sys.stdout.write("  msgid:     %d\n" % row["msgid"])
+    sys.stdout.write("  project:   %s\n" % row["project"])
+    sys.stdout.write("  direction: %s\n" % row["direction"])
+    sys.stdout.write("  status:    %s\n" % row["status"])
+    sys.stdout.write("  describe:  %s\n" % row["describe"])
+    sys.stdout.write("  remark:    %s\n" % row["remark"])
+    sys.stdout.write("  created:   %s\n" % row["created_at"])
+    sys.stdout.write("  updated:   %s\n" % row["updated_at"])
+    h = row["hex"]
+    sys.stdout.write("  hex:       %s%s\n" % (h[:80], "..." if len(h) > 80 else ""))
+    sys.stdout.write("  typedef:\n")
+    fmt = _db_pretty_typedef(row["typedef"])
+    for L in fmt.split("\n"):
+        sys.stdout.write("    %s\n" % L)
+
+
+def _db_pretty_typedef(typedef_str):
+    # type: (str) -> str
+    try:
+        obj = json.loads(typedef_str) if typedef_str else {}
+        return json.dumps(obj, indent=2, ensure_ascii=False)
+    except (ValueError, TypeError):
+        return typedef_str or "{}"
+
+
+def _db_print_stats(s, project=None):
+    # type: (dict, str | None) -> None
+    sys.stdout.write("  ")
+    if project:
+        sys.stdout.write("项目: %s  " % project)
+    sys.stdout.write("总计: %d 条消息\n" % s["total"])
+    if s["by_msgid"]:
+        sys.stdout.write("  按 msgid:\n")
+        for item in s["by_msgid"]:
+            sys.stdout.write("    %s: %d\n" % (item["msgid"], item["count"]))
+    if s["by_status"]:
+        sys.stdout.write("  按状态:\n")
+        for item in s["by_status"]:
+            sys.stdout.write("    %s: %d\n" % (item["status"], item["count"]))
+    if s["by_direction"]:
+        sys.stdout.write("  按方向:\n")
+        for item in s["by_direction"]:
+            sys.stdout.write("    %s: %d\n" % (item["direction"] or "(无)", item["count"]))
 
 
 # 从 args 指定的位置读取输入
