@@ -30,7 +30,7 @@
 1. 在与 `mitmproxy` 相同的环境中安装 `bbpbcn` Python 包。
    
    ```
-   pip install bbpbcn
+pip install --index-url https://test.pypi.org/simple/ bbpbcn
    ```
    
    如果 `mitmproxy` 安装在虚拟环境中，则 `bbpbcn` 包也需要安装在该虚拟环境中。

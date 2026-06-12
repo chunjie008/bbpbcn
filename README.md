@@ -17,7 +17,7 @@ bbpbcn 旨在在没有消息定义的情况下处理 protocol buffers。它 fork
 ### 从 PyPI 安装
 
 ```bash
-pip install bbpbcn
+pip install --index-url https://test.pypi.org/simple/ bbpbcn
 ```
 
 ### 源码安装（离线/本地构建）

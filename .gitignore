@@ -12,3 +12,5 @@ Test_pb2_grpc.py
 *.pem
 *.codegraph
 *.bbpbcn
+dist
+test-pypi.md

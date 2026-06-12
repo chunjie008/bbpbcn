@@ -29,7 +29,7 @@ poetry install
 BlackBox Protobuf 也可以在 PyPi 上获取：<https://pypi.org/project/bbpbcn>。通过以下命令安装：
 
 ```
-pip install bbpbcn
+pip install --index-url https://test.pypi.org/simple/ bbpbcn
 ```
 
 ## CLI
